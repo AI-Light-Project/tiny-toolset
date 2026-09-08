@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>图片水印工具 · 批量加水印</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <a class="back-home" href="../../index.html" title="返回工具集">←</a>
+    <div class="logo">WM</div>
+    <div>
+      <h1>图片水印工具</h1>
+      <p>文字 / Logo 水印 · 九宫格定位 · 平铺防盗图 · 批量导出</p>
+    </div>
+  </div>
+  <div class="topbar-actions">
+    <button id="btnAdd" class="btn btn-primary">+ 添加图片</button>
+    <button id="btnClearAll" class="btn btn-ghost">清空列表</button>
+  </div>
+</header>
+
+<main class="layout">
+
+  <!-- 左：图片列表 -->
+  <aside class="panel panel-left">
+    <div class="panel-head">
+      <h2>图片列表</h2>
+      <span id="imgCount" class="badge">0 张</span>
+    </div>
+
+    <div id="dropzone" class="dropzone">
+      <div class="dz-icon">🖼️</div>
+      <p class="dz-title">拖拽图片到此处</p>
+      <p class="dz-sub">或点击选择 · 支持 JPG / PNG / WebP / BMP / GIF</p>
+      <p class="dz-sub">也可以直接 Ctrl+V 粘贴</p>
+      <input type="file" id="fileInput" accept="image/*" multiple hidden>
+    </div>
+
+    <div id="thumbList" class="thumb-list"></div>
+    <p id="emptyTip" class="empty-tip">还没有图片，先添加几张试试。</p>
+  </aside>
+
+  <!-- 中：预览 -->
+  <section class="panel panel-center">
+    <div class="panel-head">
+      <h2>预览</h2>
+      <div class="head-right">
+        <label class="switch">
+          <input type="checkbox" id="togglePreview" checked>
+          <span>显示水印</span>
+        </label>
+      </div>
+    </div>
+
+    <div id="previewWrap" class="preview-wrap">
+      <canvas id="previewCanvas"></canvas>
+      <div id="previewEmpty" class="preview-empty">选择一张图片开始预览</div>
+    </div>
+
+    <div id="metaBar" class="meta-bar">
+      <span id="metaName">—</span>
+      <span id="metaSize" class="muted">—</span>
+    </div>
+  </section>
+
+  <!-- 右：配置 -->
+  <aside class="panel panel-right">
+    <div class="panel-head">
+      <h2>水印设置</h2>
+      <button id="btnReset" class="btn btn-mini">恢复默认</button>
+    </div>
+
+    <div class="config-scroll">
+
+      <!-- 模式 -->
+      <div class="group">
+        <div class="group-title">水印类型</div>
+        <div class="segmented">
+          <button class="seg active" data-mode="text">文字水印</button>
+          <button class="seg" data-mode="image">图片 Logo 水印</button>
+        </div>
+      </div>
+
+      <!-- 文字设置 -->
+      <div class="group" id="groupText">
+        <div class="group-title">文字内容</div>
+        <textarea id="textContent" data-cfg="text.content" class="textarea" rows="2"
+          placeholder="输入水印文字，支持换行"></textarea>
+
+        <div class="row">
+          <label class="lbl">字体</label>
+          <select id="textFamily" data-cfg="text.family" class="input">
+            <option value="system-ui, -apple-system, &quot;Segoe UI&quot;, sans-serif">系统默认 (无衬线)</option>
+            <option value="&quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, sans-serif">苹方 / 微软雅黑</option>
+            <option value="&quot;SimHei&quot;, &quot;Heiti SC&quot;, sans-serif">黑体</option>
+            <option value="&quot;SimSun&quot;, &quot;Songti SC&quot;, serif">宋体</option>
+            <option value="&quot;KaiTi&quot;, &quot;STKaiti&quot;, serif">楷体</option>
+            <option value="Arial, Helvetica, sans-serif">Arial</option>
+            <option value="Georgia, &quot;Times New Roman&quot;, serif">Georgia</option>
+            <option value="Impact, Haettenschweiler, sans-serif">Impact</option>
+            <option value="&quot;Courier New&quot;, monospace">Courier New</option>
+          </select>
+        </div>
+
+        <div class="row row-inline">
+          <label class="check"><input type="checkbox" id="textBold" data-cfg="text.bold" data-type="bool"><span>加粗</span></label>
+          <label class="check"><input type="checkbox" id="textItalic" data-cfg="text.italic" data-type="bool"><span>斜体</span></label>
+        </div>
+
+        <div class="row">
+          <label class="lbl">字号</label>
+          <div class="input-unit">
+            <input type="number" id="textSize" data-cfg="text.size" data-type="number" class="input" min="0.1" step="0.5">
+            <select id="textUnit" data-cfg="text.unit" class="select-unit">
+              <option value="%">% 短边</option>
+              <option value="px">px 固定</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <label class="lbl">行距</label>
+          <input type="number" id="textLineHeight" data-cfg="text.lineHeight" data-type="number" class="input" min="0.8" step="0.1">
+        </div>
+
+        <div class="row">
+          <label class="lbl">颜色</label>
+          <div class="color-row">
+            <input type="color" id="textColor" data-cfg="text.color" class="color">
+            <div class="swatches" id="colorSwatches">
+              <button data-color="#ffffff" style="background:#ffffff"></button>
+              <button data-color="#000000" style="background:#000000"></button>
+              <button data-color="#ff4d4f" style="background:#ff4d4f"></button>
+              <button data-color="#1890ff" style="background:#1890ff"></button>
+              <button data-color="#52c41a" style="background:#52c41a"></button>
+              <button data-color="#faad14" style="background:#faad14"></button>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <label class="lbl">不透明度 <b id="textOpacityVal" class="val">35%</b></label>
+          <input type="range" id="textOpacity" data-cfg="text.opacity" data-type="number" min="1" max="100" step="1">
+        </div>
+
+        <div class="sub-group">
+          <label class="check"><input type="checkbox" id="strokeOn" data-cfg="text.stroke.on" data-type="bool"><span>文字描边（提升浅色背景可读性）</span></label>
+          <div id="strokeOptions" class="sub-options">
+            <div class="row">
+              <label class="lbl">描边色</label>
+              <input type="color" id="strokeColor" data-cfg="text.stroke.color" class="color">
+            </div>
+            <div class="row">
+              <label class="lbl">粗细 <b id="strokeWidthVal" class="val">0.15</b></label>
+              <input type="range" id="strokeWidth" data-cfg="text.stroke.width" data-type="number" min="0.02" max="0.6" step="0.01">
+            </div>
+          </div>
+        </div>
+
+        <div class="sub-group">
+          <label class="check"><input type="checkbox" id="shadowOn" data-cfg="text.shadow.on" data-type="bool"><span>投影</span></label>
+          <div id="shadowOptions" class="sub-options">
+            <div class="row">
+              <label class="lbl">模糊 <b id="shadowBlurVal" class="val">4</b></label>
+              <input type="range" id="shadowBlur" data-cfg="text.shadow.blur" data-type="number" min="0" max="40" step="1">
+            </div>
+            <div class="row">
+              <label class="lbl">投影色</label>
+              <input type="color" id="shadowColor" data-cfg="text.shadow.color" class="color">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 图片水印设置 -->
+      <div class="group hidden" id="groupImage">
+        <div class="group-title">Logo 图片</div>
+        <div class="logo-box">
+          <div id="logoPreview" class="logo-preview">未选择</div>
+          <div class="logo-actions">
+            <button id="btnPickLogo" class="btn btn-small">选择 Logo</button>
+            <button id="btnClearLogo" class="btn btn-small btn-ghost">移除</button>
+            <input type="file" id="logoInput" accept="image/*" hidden>
+          </div>
+        </div>
+        <p class="hint">建议使用透明背景的 PNG / WebP，效果最好。</p>
+
+        <div class="row">
+          <label class="lbl">宽度</label>
+          <div class="input-unit">
+            <input type="number" id="logoWidth" data-cfg="image.width" data-type="number" class="input" min="1" step="1">
+            <select id="logoUnit" data-cfg="image.unit" class="select-unit">
+              <option value="%">% 短边</option>
+              <option value="px">px 固定</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <label class="lbl">不透明度 <b id="logoOpacityVal" class="val">35%</b></label>
+          <input type="range" id="logoOpacity" data-cfg="image.opacity" data-type="number" min="1" max="100" step="1">
+        </div>
+      </div>
+
+      <!-- 布局 -->
+      <div class="group">
+        <div class="group-title">位置与排布</div>
+        <div class="grid9" id="grid9">
+          <button data-pos="tl"></button><button data-pos="tc"></button><button data-pos="tr"></button>
+          <button data-pos="ml"></button><button data-pos="mc"></button><button data-pos="mr"></button>
+          <button data-pos="bl"></button><button data-pos="bc"></button><button data-pos="br"></button>
+        </div>
+        <button class="tile-btn" data-pos="tile">▦ 平铺全图（防截图盗用）</button>
+
+        <div id="tileOptions" class="sub-options mt">
+          <div class="row">
+            <label class="lbl">横向间距 <b id="gapXVal" class="val">60%</b></label>
+            <input type="range" id="gapX" data-cfg="layout.gapX" data-type="number" min="0" max="300" step="5">
+          </div>
+          <div class="row">
+            <label class="lbl">纵向间距 <b id="gapYVal" class="val">60%</b></label>
+            <input type="range" id="gapY" data-cfg="layout.gapY" data-type="number" min="0" max="300" step="5">
+          </div>
+          <label class="check"><input type="checkbox" id="stagger" data-cfg="layout.stagger" data-type="bool"><span>交错排列（更难被裁掉）</span></label>
+        </div>
+
+        <div id="marginOptions" class="mt">
+          <div class="row">
+            <label class="lbl">边距</label>
+            <div class="input-unit">
+              <input type="number" id="margin" data-cfg="layout.margin" data-type="number" class="input" min="0" step="0.5">
+              <select id="marginUnit" data-cfg="layout.marginUnit" class="select-unit">
+                <option value="%">% 短边</option>
+                <option value="px">px 固定</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <label class="lbl">旋转角度 <b id="angleVal" class="val">-30°</b></label>
+          <input type="range" id="angle" data-cfg="layout.angle" data-type="number" min="-180" max="180" step="1">
+        </div>
+        <div class="row row-inline">
+          <button class="btn btn-mini" data-angle="-30">-30°</button>
+          <button class="btn btn-mini" data-angle="-45">-45°</button>
+          <button class="btn btn-mini" data-angle="0">0°</button>
+          <button class="btn btn-mini" data-angle="45">45°</button>
+        </div>
+      </div>
+
+      <!-- 导出 -->
+      <div class="group">
+        <div class="group-title">导出设置</div>
+        <div class="row">
+          <label class="lbl">格式</label>
+          <select id="outFormat" data-cfg="output.format" class="input">
+            <option value="original">保持原格式</option>
+            <option value="jpg">JPG（体积小）</option>
+            <option value="png">PNG（无损）</option>
+            <option value="webp">WebP（高压缩比）</option>
+          </select>
+        </div>
+        <div class="row" id="qualityRow">
+          <label class="lbl">输出质量 <b id="qualityVal" class="val">92</b></label>
+          <input type="range" id="outQuality" data-cfg="output.quality" data-type="number" min="0.5" max="1" step="0.01">
+        </div>
+        <p class="hint">JPG / WebP 建议 0.90~0.95，肉眼几乎无损；PNG 始终为无损导出。</p>
+
+        <div class="row">
+          <label class="lbl">文件名</label>
+          <select id="nameRule" data-cfg="output.nameRule" class="input">
+            <option value="suffix">原名 + 后缀</option>
+            <option value="prefix">前缀 + 原名</option>
+          </select>
+        </div>
+        <div class="row">
+          <label class="lbl">附加文字</label>
+          <input type="text" id="affix" data-cfg="output.affix" class="input">
+        </div>
+      </div>
+
+    </div>
+
+    <div class="export-bar">
+      <div id="progress" class="progress hidden"><div id="progressBar" class="progress-bar"></div></div>
+      <button id="btnExportOne" class="btn btn-primary btn-block">导出当前图片</button>
+      <button id="btnExportAll" class="btn btn-outline btn-block">批量导出全部（ZIP 打包）</button>
+      <p id="exportTip" class="export-tip"></p>
+    </div>
+  </aside>
+</main>
+
+<div id="toast" class="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>

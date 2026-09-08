@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>工具箱 · 本地小工具集合</title>
+<link rel="stylesheet" href="assets/css/hub.css">
+</head>
+<body>
+
+<div class="page">
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="hero-logo">TB</div>
+      <div>
+        <h1>工具箱</h1>
+        <p class="sub">纯前端 · 离线可用 · 数据不出本机</p>
+      </div>
+      <div class="hero-stat" id="stat"></div>
+    </div>
+
+    <input id="search" class="search" type="search" autocomplete="off"
+           placeholder="搜索工具名称、描述或标签…（按 / 聚焦，Esc 清空）">
+    <div class="chips" id="chips"></div>
+  </header>
+
+  <main class="grid" id="grid"></main>
+  <div class="empty" id="empty" hidden>没有匹配的工具，换个关键词试试。</div>
+
+  <footer class="foot">
+    <p>想添加新工具？复制 <code>tools/_template</code> 目录，然后按 <a href="docs/adding-tools.md">docs/adding-tools.md</a> 操作，在 <code>assets/js/tools.js</code> 里登记一下即可。</p>
+    <p>所有工具都在你的浏览器本地运行，不依赖网络，图片和文件不会上传到任何服务器。</p>
+  </footer>
+</div>
+
+<script src="assets/js/tools.js"></script>
+<script src="assets/js/hub.js"></script>
+</body>
+</html>
