@@ -182,6 +182,32 @@ cp -r tools/_template tools/my-tool
 
 ---
 
+## 部署到 Vercel
+
+本项目是纯静态站点（无构建步骤），可直接部署到 [Vercel](https://vercel.com)。
+
+**通过 GitHub 导入（推荐）**
+
+1. 在 Vercel 新建项目，导入本仓库 `AI-Light-Project/tiny-toolset`
+2. **Root Directory（根目录）设为 `tools-hub`** —— 站点文件都在这个子目录里
+3. Framework Preset 选 **Other**，Build Command / Output Directory 保持默认即可
+   （仓库内的 `vercel.json` 已声明 `buildCommand: null` + `outputDirectory: "."`）
+4. 点击 Deploy，几秒后即可通过分配的 `*.vercel.app` 域名访问
+
+**通过 Vercel CLI**
+
+```bash
+npm i -g vercel
+cd tools-hub
+vercel
+```
+
+> 部署后所有工具页面（如 `/tools/image-watermark/`）均可直接访问；站点全程使用相对路径，
+> 挂在任意子路径下也能正常工作。
+> `weapp/`（微信小程序版）不属于 Web 站点，仅存在于 `wechat-miniprogram` 分支，不会随 master 部署。
+
+---
+
 ## 许可
 
 内部自用工具集，随意取用与修改。
