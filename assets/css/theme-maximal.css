@@ -300,9 +300,48 @@
 [data-theme="dopamine"] ::-webkit-scrollbar-thumb { background: #52525b; }
 [data-theme="dopamine"] ::-webkit-scrollbar-thumb:hover { background: #71717a; }
 
-/* ---------- 移动端：保持热闹，但装饰减量 ---------- */
-@media (max-width: 640px) {
+/* ---------- 移动端：保持热闹，但收敛装饰与溢出 ---------- */
+@media (max-width: 900px) {
+  /* 硬阴影在窄屏会顶到视口边缘引发横向滚动，收窄偏移 */
+  [data-theme="dopamine"] .card,
+  [data-theme="dopamine"] .grid .card:nth-child(5n+2),
+  [data-theme="dopamine"] .grid .card:nth-child(5n+3),
+  [data-theme="dopamine"] .grid .card:nth-child(5n+4),
+  [data-theme="dopamine"] .grid .card:nth-child(5n) {
+    box-shadow: 3px 3px 0 var(--a3), 6px 6px 0 var(--a1);
+  }
+  [data-theme="dopamine"] .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 4px 4px 0 var(--a3), 8px 8px 0 var(--a1);
+  }
+  [data-theme="dopamine"] .panel { box-shadow: 3px 3px 0 var(--a5); }
+
+  /* 工具页的分页标签：保持粗边与激活态冲击感 */
+  .view-tab { border-width: 3px; border-radius: 14px; }
+  [data-theme="dopamine"] .view-tab.is-active {
+    background: linear-gradient(90deg, var(--a1), var(--a5));
+    color: #fff;
+    border-color: var(--a3);
+  }
+  [data-theme="dopamine"] .export-bar {
+    border-top: 3px solid var(--a1);
+    background: rgba(13, 13, 26, .94);
+  }
+
+  /* 悬浮主题按钮避开状态栏与安全区 */
+  .theme-toggle {
+    top: calc(8px + env(safe-area-inset-top, 0px));
+    right: calc(8px + env(safe-area-inset-right, 0px));
+  }
+
   .fx-layer img:nth-child(n+5) { display: none; }
-  [data-theme="dopamine"] .card { transform: none; }
-  [data-theme="dopamine"] .grid .card:nth-child(even) { transform: none; }
+}
+
+@media (max-width: 640px) {
+  .fx-layer img:nth-child(n+3) { display: none; }
+  [data-theme="dopamine"] .card,
+  [data-theme="dopamine"] .grid .card:nth-child(5n+2),
+  [data-theme="dopamine"] .grid .card:nth-child(5n+3),
+  [data-theme="dopamine"] .grid .card:nth-child(5n+4),
+  [data-theme="dopamine"] .grid .card:nth-child(5n) { transform: none; }
 }

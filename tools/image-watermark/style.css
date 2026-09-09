@@ -430,7 +430,27 @@ input[type=range] {
 ::-webkit-scrollbar-thumb:hover { background: #b9bfc7; }
 ::-webkit-scrollbar-track { background: transparent; }
 
-/* 响应式 */
+/* 移动端视图切换标签（宽屏隐藏，窄屏由下方 media query 启用） */
+.view-tabs { display: none; gap: 8px; padding: 10px 12px 0; }
+.view-tab {
+  flex: 1 1 0;
+  min-height: 44px;
+  border: 1px solid var(--line-strong);
+  background: var(--panel);
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--text-sub);
+  cursor: pointer;
+}
+.view-tab.is-active {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* 响应式：平板/窄窗 —— 三栏改为纵向堆叠 */
 @media (max-width: 1100px) {
   body { overflow: auto; }
   .layout { grid-template-columns: 1fr; height: auto; }
@@ -438,4 +458,75 @@ input[type=range] {
   .panel-center { min-height: 420px; }
   .panel-right { max-height: none; }
   .config-scroll { overflow: visible; }
+}
+
+/* 响应式：手机 —— 三栏改为分页（图片 / 预览 / 设置），导出栏固定底部 */
+@media (max-width: 900px) {
+  html, body { height: auto; min-height: 100vh; min-height: 100dvh; }
+  body {
+    overflow: auto;
+    /* 为固定导出栏与 iOS 底部安全区预留空间 */
+    padding-bottom: calc(116px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .view-tabs { display: flex; }
+  .layout { display: block; padding: 10px; gap: 0; height: auto; }
+
+  .panel { display: none; margin-bottom: 10px; }
+  .layout[data-view="list"] .panel-left,
+  .layout[data-view="preview"] .panel-center,
+  .layout[data-view="settings"] .panel-right { display: flex; }
+
+  /* 顶栏：换行并让操作按钮平分宽度，副标题省略 */
+  .topbar {
+    height: auto;
+    padding: 8px 12px;
+    padding-top: calc(8px + env(safe-area-inset-top, 0px));
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .topbar h1 { font-size: 15px; }
+  .topbar p { display: none; }
+  .topbar-actions { width: 100%; display: flex; gap: 8px; }
+  .topbar-actions .btn { flex: 1; }
+
+  /* 图片列表：三列更好选；删除按钮常显（触屏没有 hover） */
+  .thumb-list { grid-template-columns: repeat(3, 1fr); }
+  .thumb .del { opacity: 1; width: 26px; height: 26px; line-height: 24px; font-size: 15px; }
+
+  /* 预览区给足高度 */
+  .panel-center { min-height: 52vh; }
+  .preview-wrap { margin: 10px; }
+  .meta-bar { flex-wrap: wrap; gap: 2px 10px; }
+
+  /* 设置面板：控件间距加大，九宫格按钮放大 */
+  .config-scroll { overflow: visible; padding: 4px 12px 12px; }
+  .row { margin-bottom: 14px; }
+  .grid9 { width: 186px; gap: 8px; }
+  .sub-options { padding-left: 12px; }
+  .input-unit .input { min-height: 44px; }
+  .color { width: 52px; height: 44px; }
+  .logo-box { gap: 12px; }
+
+  /* 导出栏固定在底部，任意分页都可导出 */
+  .export-bar {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    z-index: 40;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+    box-shadow: 0 -2px 14px rgba(0, 0, 0, .10);
+  }
+  .export-bar .btn-block { margin-top: 0; flex: 1 1 140px; }
+  .export-tip { order: -1; flex: 1 0 100%; margin: 0 0 2px; min-height: 0; }
+}
+
+/* 超窄屏（≤360px） */
+@media (max-width: 360px) {
+  .layout { padding: 8px; }
+  .thumb-list { grid-template-columns: repeat(2, 1fr); }
+  .topbar h1 { font-size: 14px; }
+  .grid9 { width: 100%; }
 }

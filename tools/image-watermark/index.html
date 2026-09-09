@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>图片水印工具 · 批量加水印</title>
 <script>document.documentElement.setAttribute('data-theme', (function(){try{return localStorage.getItem('tools-hub-theme')}catch(e){return null}})()||'clean')</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -30,7 +30,14 @@
   </div>
 </header>
 
-<main class="layout">
+<!-- 移动端视图切换：窄屏时把三栏改为分页，宽屏隐藏 -->
+<nav class="view-tabs" role="tablist" aria-label="视图切换">
+  <button type="button" class="view-tab is-active" data-view="list" role="tab" aria-selected="true">图片</button>
+  <button type="button" class="view-tab" data-view="preview" role="tab" aria-selected="false">预览</button>
+  <button type="button" class="view-tab" data-view="settings" role="tab" aria-selected="false">设置</button>
+</nav>
+
+<main class="layout" data-view="list">
 
   <!-- 左：图片列表 -->
   <aside class="panel panel-left">

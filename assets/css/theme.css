@@ -122,3 +122,71 @@ body,
     transition-duration: .15s !important;
   }
 }
+
+/* ============================================================
+   触控与响应式基线（全站共用）
+   目标：任何屏幕下点击目标够大、点击无延迟、不横向溢出
+   ============================================================ */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* 去掉移动端点击高亮闪烁（反馈交给 :active），并关闭双击缩放的 300ms 延迟 */
+button, a, input, select, textarea, label, [role="tab"], .thumb {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* 媒体元素不撑破容器 */
+img, svg, canvas { max-width: 100%; }
+.page, .layout, .panel, .grid { min-width: 0; }
+
+/* 键盘/读屏可见的焦点环（不干扰鼠标点击） */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* 触控目标尺寸：主操作 ≥44px，次要操作 ≥32px */
+.btn { min-height: 44px; }
+.chip { min-height: 36px; }
+.seg { min-height: 40px; }
+.btn-small { min-height: 36px; }
+.btn-mini { min-height: 32px; }
+.theme-toggle { min-height: 40px; }
+.back-home { min-width: 36px; min-height: 36px; }
+
+/* ---------------- 窄屏 / 触控设备增强 ---------------- */
+@media (max-width: 900px) {
+  /* iOS 聚焦输入框时字号 <16px 会触发整页自动缩放，统一提到 16px */
+  input, select, textarea { font-size: 16px; }
+
+  .btn, .chip, .view-tab { min-height: 48px; }
+  .btn-small, .btn-mini { min-height: 44px; }
+  .back-home { width: 44px; height: 44px; line-height: 42px; font-size: 18px; }
+  .theme-toggle { min-height: 44px; padding: 8px 14px; }
+
+  /* 滑块在触屏上默认太小，放大轨道与滑块 */
+  input[type="range"] { height: 40px; }
+  input[type="range"]::-webkit-slider-thumb {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: var(--primary);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 26px; height: 26px;
+    border: none; border-radius: 50%;
+    background: var(--primary);
+  }
+  input[type="color"] { min-height: 44px; }
+
+  /* 触摸反馈：按下即响应 */
+  .btn:active, .chip:active, .view-tab:active, .thumb:active { opacity: .75; }
+}
+
+/* 横屏矮屏（如手机横放）：收紧纵向留白 */
+@media (max-height: 480px) and (orientation: landscape) {
+  .page { padding: 16px 16px 32px; }
+  .hero { margin-bottom: 16px; }
+}

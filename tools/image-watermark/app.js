@@ -163,10 +163,29 @@
     return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
 
+  // 移动端：三栏改为分页，这里统一提供切换能力（宽屏下 setView 无副作用）
+  function isNarrow() {
+    return window.matchMedia('(max-width: 900px)').matches;
+  }
+  function setView(name) {
+    const layout = document.querySelector('.layout');
+    if (!layout) return;
+    layout.setAttribute('data-view', name);
+    document.querySelectorAll('.view-tab').forEach((t) => {
+      const on = t.dataset.view === name;
+      t.classList.toggle('is-active', on);
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    // 面板从隐藏变可见后容器尺寸才有效，需重算预览
+    if (name === 'preview') requestAnimationFrame(renderPreview);
+  }
+
   function selectItem(i) {
     state.current = i;
     renderThumbs();
     renderPreview();
+    // 手机上选完图自动跳到预览，省一次点击
+    if (isNarrow()) setView('preview');
   }
 
   function removeItem(i) {
@@ -734,9 +753,17 @@
 
   function pickLogo() { logoInput.click(); }
 
+  // 移动端视图切换：图片 / 预览 / 设置
+  function initViewTabs() {
+    document.querySelectorAll('.view-tab').forEach((t) => {
+      t.addEventListener('click', () => setView(t.dataset.view));
+    });
+  }
+
   // ============ 启动 ============
   syncUI();
   bind();
+  initViewTabs();
   renderThumbs();
   renderPreview();
 })();
