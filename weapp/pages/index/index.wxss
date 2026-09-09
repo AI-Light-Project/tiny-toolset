@@ -1,0 +1,32 @@
+.hero {
+  padding: 16rpx 8rpx 28rpx;
+}
+.tool {
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+}
+.card-hover {
+  transform: translateY(2rpx);
+  border-color: var(--primary);
+}
+.tool-icon {
+  font-size: 56rpx;
+  line-height: 1.2;
+}
+.tool-name {
+  font-size: 32rpx;
+  font-weight: 700;
+}
+.tool-desc {
+  font-size: 24rpx;
+}
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+}
+.grid .tool {
+  width: calc((100% - 20rpx) / 2);
+  box-sizing: border-box;
+}

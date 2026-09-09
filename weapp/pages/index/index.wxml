@@ -1,0 +1,26 @@
+<view class="container">
+  <view class="hero">
+    <view class="title">工具箱</view>
+    <view class="subtitle">本地小工具集合 · 小程序版</view>
+  </view>
+
+  <view class="grid">
+    <view
+      class="card tool"
+      wx:for="{{tools}}"
+      wx:key="id"
+      data-path="{{item.path}}"
+      bindtap="openTool"
+      hover-class="card-hover"
+    >
+      <view class="tool-icon">{{item.icon}}</view>
+      <view class="tool-name">{{item.name}}</view>
+      <view class="tool-desc subtitle">{{item.desc}}</view>
+    </view>
+
+    <view class="card tool tool-empty" wx:if="{{tools.length === 0}}">
+      <view class="tool-name">暂无工具</view>
+      <view class="tool-desc subtitle">在 app.js 的 globalData.tools 中追加</view>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,61 @@
+/* 全局样式：暗色多巴胺品牌基调，与 Web 版保持一致 */
+page {
+  --bg: #0D0D1A;
+  --panel: #16162a;
+  --panel-2: #1d1d33;
+  --line: #2a2a44;
+  --text: #f5f5fa;
+  --muted: #9a9ab5;
+  --primary: #ff4d8d;
+  --a2: #22d3ee;
+  --a3: #fde047;
+  --a4: #fb923c;
+  --a5: #a855f7;
+
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 28rpx;
+  line-height: 1.5;
+}
+
+.container { padding: 24rpx; box-sizing: border-box; }
+
+.card {
+  background: var(--panel);
+  border: 4rpx solid var(--line);
+  border-radius: 20rpx;
+  padding: 28rpx;
+  box-sizing: border-box;
+}
+
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary);
+  color: #fff;
+  border-radius: 14rpx;
+  font-weight: 600;
+  padding: 22rpx 28rpx;
+  font-size: 30rpx;
+}
+.btn:active { opacity: 0.8; }
+
+.btn-ghost {
+  background: var(--panel-2);
+  color: var(--text);
+  border: 4rpx solid var(--line);
+}
+.btn-ghost:active { opacity: 0.8; }
+
+.btn[disabled] { opacity: 0.45; }
+
+.row { display: flex; align-items: center; }
+.between { justify-content: space-between; }
+.muted { color: var(--muted); }
+.gap { gap: 16rpx; }
+.wrap { flex-wrap: wrap; }
+
+.title { font-size: 36rpx; font-weight: 700; }
+.subtitle { font-size: 26rpx; color: var(--muted); }

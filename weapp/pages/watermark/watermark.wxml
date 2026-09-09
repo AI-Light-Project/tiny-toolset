@@ -1,0 +1,133 @@
+<view class="container">
+
+  <!-- 预览区 -->
+  <view class="card preview-card">
+    <view wx:if="{{hasImage}}" class="canvas-wrap">
+      <canvas type="2d" id="previewCanvas" class="preview-canvas"></canvas>
+    </view>
+    <view wx:else class="preview-empty">
+      <view class="title">还没有图片</view>
+      <view class="subtitle">点击下方「选择图片」开始</view>
+    </view>
+  </view>
+
+  <!-- 缩略图 -->
+  <scroll-view wx:if="{{hasImage}}" class="thumbs" scroll-x enable-flex>
+    <view wx:for="{{images}}" wx:key="path"
+      class="thumb {{current===index?'active':''}}"
+      data-index="{{index}}" bindtap="selectImage">
+      <image src="{{item.path}}" mode="aspectFill" class="thumb-img"></image>
+    </view>
+    <view class="thumb add" bindtap="chooseImage"><text class="add-plus">+</text></view>
+  </scroll-view>
+
+  <button class="btn" bindtap="chooseImage">选择图片</button>
+
+  <!-- 模式切换 -->
+  <view class="card section">
+    <view class="seg">
+      <view class="seg-item {{mode==='text'?'active':''}}" data-mode="text" bindtap="onMode">文字水印</view>
+      <view class="seg-item {{mode==='image'?'active':''}}" data-mode="image" bindtap="onMode">图片 / Logo</view>
+    </view>
+  </view>
+
+  <!-- 文字水印设置 -->
+  <view class="card section" wx:if="{{mode==='text'}}">
+    <view class="sec-title">文字内容</view>
+    <textarea class="input" value="{{text.content}}" bindinput="onContent" placeholder="输入水印文字" auto-height maxlength="200"></textarea>
+
+    <view class="sec-title">字体</view>
+    <view class="seg small">
+      <view wx:for="{{families}}" wx:key="*this"
+        class="seg-item {{text.family===item?'active':''}}"
+        data-i="{{index}}" bindtap="onFamily">{{familyLabels[index]}}</view>
+    </view>
+
+    <view class="slider-row">
+      <text class="slider-label">字号 {{text.size}}%</text>
+      <slider min="1" max="20" value="{{text.size}}" bindchanging="onTextSize" bindchange="onTextSize" show-value/>
+    </view>
+    <view class="slider-row">
+      <text class="slider-label">不透明度 {{text.opacity}}%</text>
+      <slider min="5" max="100" value="{{text.opacity}}" bindchanging="onTextOpacity" bindchange="onTextOpacity" show-value/>
+    </view>
+
+    <view class="row between"><text>斜体</text><switch checked="{{text.italic}}" bindchange="onItalic"/></view>
+    <view class="row between"><text>加粗</text><switch checked="{{text.bold}}" bindchange="onBold"/></view>
+    <view class="row between"><text>描边</text><switch checked="{{text.stroke.on}}" bindchange="onStroke"/></view>
+    <view class="row between"><text>阴影</text><switch checked="{{text.shadow.on}}" bindchange="onShadow"/></view>
+
+    <view class="sec-title">颜色</view>
+    <view class="swatches">
+      <view wx:for="{{colors}}" wx:key="*this"
+        class="swatch {{text.color===item?'active':''}}"
+        style="background:{{item}}" data-color="{{item}}" bindtap="onColor"></view>
+    </view>
+  </view>
+
+  <!-- 图片 / Logo 水印设置 -->
+  <view class="card section" wx:if="{{mode==='image'}}">
+    <button class="btn btn-ghost" bindtap="chooseLogo">选择 Logo</button>
+    <view wx:if="{{imageWm.path}}" class="logo-preview">
+      <image src="{{imageWm.path}}" mode="aspectFit" class="logo-img"></image>
+    </view>
+    <view class="slider-row">
+      <text class="slider-label">大小 {{imageWm.width}}%</text>
+      <slider min="2" max="80" value="{{imageWm.width}}" bindchanging="onImageWidth" bindchange="onImageWidth" show-value/>
+    </view>
+    <view class="slider-row">
+      <text class="slider-label">不透明度 {{imageWm.opacity}}%</text>
+      <slider min="5" max="100" value="{{imageWm.opacity}}" bindchanging="onImageOpacity" bindchange="onImageOpacity" show-value/>
+    </view>
+  </view>
+
+  <!-- 布局 -->
+  <view class="card section">
+    <view class="sec-title">旋转角度 {{layout.angle}}°</view>
+    <slider min="-180" max="180" value="{{layout.angle}}" bindchanging="onLayoutAngle" bindchange="onLayoutAngle" show-value/>
+
+    <view class="sec-title">位置</view>
+    <view class="pos-grid">
+      <view wx:for="{{posList}}" wx:for-item="row" wx:for-index="ri" wx:key="ri" class="pos-row">
+        <view wx:for="{{row}}" wx:for-item="p" wx:key="*this"
+          class="pos-cell {{!layout.tile && layout.position===p?'active':''}}"
+          data-p="{{p}}" bindtap="onPosition">
+          <text wx:if="{{!layout.tile && layout.position===p}}" class="pos-dot">●</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="row between">
+      <text>平铺全图（防截图）</text><switch checked="{{layout.tile}}" bindchange="onTile"/>
+    </view>
+    <block wx:if="{{layout.tile}}">
+      <view class="slider-row">
+        <text class="slider-label">横向间距 {{layout.gapX}}%</text>
+        <slider min="0" max="200" value="{{layout.gapX}}" bindchanging="onGapX" bindchange="onGapX" show-value/>
+      </view>
+      <view class="slider-row">
+        <text class="slider-label">纵向间距 {{layout.gapY}}%</text>
+        <slider min="0" max="200" value="{{layout.gapY}}" bindchanging="onGapY" bindchange="onGapY" show-value/>
+      </view>
+      <view class="row between"><text>交错排列</text><switch checked="{{layout.stagger}}" bindchange="onStagger"/></view>
+    </block>
+    <view class="slider-row" wx:else>
+      <text class="slider-label">边距 {{layout.margin}}%</text>
+      <slider min="0" max="30" value="{{layout.margin}}" bindchanging="onMargin" bindchange="onMargin" show-value/>
+    </view>
+
+    <view class="row between"><text>显示水印</text><switch checked="{{showWM}}" bindchange="onShowWM"/></view>
+  </view>
+
+  <view class="spacer"></view>
+
+  <!-- 导出栏（固定底部） -->
+  <view class="export-bar">
+    <button class="btn btn-ghost flex1" bindtap="saveCurrent" disabled="{{busy}}">保存当前</button>
+    <button class="btn flex1" bindtap="saveAll" disabled="{{busy}}">批量保存</button>
+  </view>
+  <view wx:if="{{busy}}" class="progress">{{progressText}}</view>
+
+  <!-- 离屏导出画布 -->
+  <canvas type="2d" id="exportCanvas" class="export-canvas"></canvas>
+</view>
