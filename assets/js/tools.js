@@ -13,6 +13,7 @@ window.TOOLS = [
     name: '图片水印工具',
     desc: '给图片批量添加文字或 Logo 水印，支持九宫格定位与平铺防盗图，导出时保持原始分辨率。',
     icon: '💧',
+    illustration: 'assets/img/droplet.png',
     category: '图片处理',
     tags: ['水印', '批量处理', 'Canvas', '隐私保护'],
     path: 'tools/image-watermark/index.html',
@@ -33,6 +34,7 @@ window.TOOLS = [
   //   name: '工具名称',
   //   desc: '一句话说明这个工具做什么。',
   //   icon: '🛠️',
+  //   illustration: 'assets/img/xxx.png',  // 可选：卡片插画（建议 256x256 透明 PNG，见 assets/img/CREDITS.md）
   //   category: '分类名',
   //   tags: ['标签1', '标签2'],
   //   path: 'tools/your-tool/index.html',

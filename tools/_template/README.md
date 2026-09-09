@@ -29,6 +29,7 @@
      path: 'tools/image-resize/index.html',
      version: '0.1.0',
      updated: '2026-09-08',
+     illustration: 'assets/img/crayon.png',   // 可选：卡片插画（见 assets/img/CREDITS.md）
      features: ['要点一', '要点二', '要点三']
    }
    ```
@@ -41,14 +42,22 @@
 
 ```
 tools/<tool-id>/
-├── index.html   # 入口，双击即可打开
-├── style.css    # 样式（只用本地文件，不引用 CDN）
+├── index.html   # 入口，双击即可打开（已接入全局主题系统）
+├── style.css    # 样式：只消费 theme.css 的变量，禁止自定义 :root 颜色
 ├── app.js       # 逻辑
 └── README.md    # 该工具的功能说明与使用方法
 ```
 
 ## 三条硬性约定
 
-- **零依赖、零网络请求**：不引 CDN、不调外部 API，断网也能用。
+- **零依赖、零网络请求**：不引 CDN、不调外部 API，断网也能用（Google Fonts 为可选增强，失败自动回退）。
 - **不用 ES module**：`<script src="app.js">` 普通引入，否则 `file://` 下会被 CORS 拦截。
 - **数据不出本机**：所有处理在浏览器完成，不上传任何文件或文本。
+
+## 主题支持
+
+模板已接入主题系统（右上角悬浮按钮切换，两页面共用同一份 `localStorage`）：
+
+- 颜色/字体/圆角/阴影全部来自 `assets/css/theme.css` 的变量（`--bg`、`--panel`、`--primary`、`--a1`~`--a5` 等）
+- 组件样式里**不要**定义 `:root` 颜色变量，否则会覆盖全局主题导致切换失效
+- 需要主题专属质感时，把规则写在 `assets/css/theme-maximal.css` 里并用 `[data-theme="xxx"]` 前缀

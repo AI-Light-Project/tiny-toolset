@@ -1,0 +1,124 @@
+/* ============================================================
+   theme.css —— 集中式设计令牌（全仓库唯一变量来源）
+   切换机制：<html data-theme="clean | dopamine">
+   约定：组件样式（hub.css / 各工具 style.css）只消费变量，
+        不再自定义 :root 颜色；主题质感增强见 theme-maximal.css
+   ============================================================ */
+
+:root,
+[data-theme="clean"] {
+  /* 表面 */
+  --bg: #f5f6f8;
+  --panel: #ffffff;
+  --panel-2: #fbfcfd;
+  --line: #e6e8eb;
+  --line-strong: #d5d9de;
+
+  /* 文字 */
+  --text: #1f2329;
+  --text-sub: #646a73;
+  --text-muted: #8f959e;
+
+  /* 强调色（单强调色原则） */
+  --primary: #2563eb;
+  --primary-dark: #1d4ed8;
+  --primary-soft: #eaf1ff;
+  --danger: #dc2626;
+
+  /* 多巴胺主题的五色系统在 clean 下不启用，但保留定义供组件引用 */
+  --a1: #2563eb;  /* magenta 位 */
+  --a2: #0f6e56;  /* cyan 位 */
+  --a3: #854f0b;  /* yellow 位 */
+  --a4: #993c1d;  /* orange 位 */
+  --a5: #534ab7;  /* purple 位 */
+
+  /* 形状与质感 */
+  --radius: 12px;
+  --radius-card: 12px;
+  --border-w: 1px;
+  --shadow: 0 1px 3px rgba(16, 24, 40, .06), 0 1px 2px rgba(16, 24, 40, .04);
+  --shadow-hover: 0 8px 24px rgba(16, 24, 40, .10);
+  --shadow-stack: none;
+
+  /* 字体 */
+  --font-body: "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-head: var(--font-body);
+  --font-display: var(--font-body);
+  --font-mono: "Cascadia Code", Consolas, "Courier New", monospace;
+
+  /* 装饰 */
+  --show-illo: 1;        /* 是否显示卡通插画 */
+  --hero-logo-display: flex;
+  --hero-illo-display: none;
+  --title-shadow: none;
+  --deco-rotate: 0deg;
+  --card-hover-rotate: 0deg;
+}
+
+/* ============================================================
+   多巴胺 / 极致主义主题
+   深紫黑底 + 五色系统 + 粗彩边 + 堆叠硬阴影
+   ============================================================ */
+[data-theme="dopamine"] {
+  /* 表面 */
+  --bg: #0d0d1a;
+  --panel: #2d1b4e;
+  --panel-2: #241540;
+  --line: rgba(255, 58, 242, .38);
+  --line-strong: #ff3af2;
+
+  /* 文字：正文白 on 深底 = 19.5:1 (AAA) */
+  --text: #ffffff;
+  --text-sub: rgba(255, 255, 255, .82);
+  --text-muted: rgba(255, 255, 255, .60);
+
+  /* 五色系统 */
+  --a1: #ff3af2;  /* magenta */
+  --a2: #00f5d4;  /* cyan */
+  --a3: #ffe600;  /* yellow */
+  --a4: #ff6b35;  /* orange */
+  --a5: #7b2fff;  /* purple */
+
+  --primary: var(--a1);
+  --primary-dark: var(--a4);
+  --primary-soft: rgba(255, 58, 242, .16);
+  --danger: #ff5a5a;
+
+  /* 形状与质感 */
+  --radius: 16px;
+  --radius-card: 24px;
+  --border-w: 4px;
+  --shadow: 0 0 20px rgba(255, 58, 242, .25);
+  --shadow-hover: 8px 8px 0 var(--a3), 16px 16px 0 var(--a1),
+                  0 0 40px rgba(255, 58, 242, .35);
+  --shadow-stack: 6px 6px 0 var(--a3), 12px 12px 0 var(--a1);
+
+  /* 字体 */
+  --font-head: "Outfit", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --font-display: "Bangers", "Outfit", "PingFang SC", sans-serif;
+  --font-body: "DM Sans", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+
+  /* 装饰 */
+  --show-illo: 1;
+  --hero-logo-display: none;
+  --hero-illo-display: block;
+  --title-shadow: 2px 2px 0 var(--a5), 4px 4px 0 var(--a1);
+  --deco-rotate: -1.5deg;
+  --card-hover-rotate: 1.2deg;
+}
+
+/* 平滑的主题过渡 */
+body,
+.panel, .card, .topbar, .input, .btn, .chip, .search {
+  transition: background-color .25s ease, border-color .25s ease,
+              color .25s ease, box-shadow .25s ease;
+}
+
+/* 减少动态偏好：关闭所有持续动画（theme-maximal 中定义的动画一并失效） */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .15s !important;
+  }
+}

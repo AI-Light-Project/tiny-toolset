@@ -51,6 +51,7 @@ tools-hub/
 | `path` | ✓ | 相对首页的入口路径 |
 | `version` | | 语义化版本 |
 | `updated` | | 更新日期 `YYYY-MM-DD` |
+| `illustration` | | 卡片插画图片路径（相对首页，如 `assets/img/crayon.png`）；不填则显示 `icon` 的 emoji |
 | `features` | | 功能要点数组，卡片上最多展示 3 条 |
 
 > 注册表用 JS（`window.TOOLS`）而不是 JSON 文件，是因为用 `file://` 直接双击首页时，
@@ -61,8 +62,13 @@ tools-hub/
 1. **零依赖**：不引 CDN、不装 npm 包，断网可用。
 2. **不用 ES module**：`<script src="app.js"></script>` 普通引入即可（`type="module"` 在 `file://` 下会被 CORS 拦截）。
 3. **数据不出本机**：所有计算在浏览器完成。
-4. **沿用设计变量**：`style.css` 顶部已经备好 `--primary`、`--text-sub` 等变量，和首页风格保持一致。
+4. **令牌集中**：颜色/字体/圆角/阴影变量统一来自 `assets/css/theme.css`（模板已自动引入）。
+   `style.css` 里**禁止**定义 `:root` 颜色变量——否则会覆盖全局主题，右上角的主题切换会失效。
+   需要的变量：`--bg` `--panel` `--line` `--line-strong` `--text` `--text-sub` `--text-muted`
+   `--primary` `--danger` `--a1`~`--a5` `--radius` `--radius-card` `--border-w` `--shadow`
+   `--font-body` `--font-head` `--font-mono`。
 5. **每个工具页都要放返回入口**：`<a class="back-home" href="../../index.html">←</a>`。
+6. **插画**：优先从 `assets/img/` 选取现有素材（Fluent Emoji，MIT），并在 `CREDITS.md` 登记。
 
 ## 本地预览
 

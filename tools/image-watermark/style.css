@@ -1,18 +1,5 @@
-:root {
-  --bg: #f5f6f8;
-  --panel: #ffffff;
-  --line: #e6e8eb;
-  --line-strong: #d5d9de;
-  --text: #1f2329;
-  --text-sub: #646a73;
-  --text-muted: #8f959e;
-  --primary: #2563eb;
-  --primary-dark: #1d4ed8;
-  --primary-soft: #eaf1ff;
-  --danger: #dc2626;
-  --radius: 12px;
-  --shadow: 0 1px 3px rgba(16, 24, 40, .06), 0 1px 2px rgba(16, 24, 40, .04);
-}
+/* 设计令牌（颜色/字体/圆角/阴影）统一由 ../../assets/css/theme.css 提供，
+   本文件只负责本工具的布局与组件结构。 */
 
 * { box-sizing: border-box; }
 
@@ -25,12 +12,15 @@ html, body {
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--font-body);
   font-size: 14px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
+
+/* 顶栏插画：清爽主题不显示，多巴胺主题下由 theme-maximal.css 启用 */
+.tool-illo { display: none; width: 44px; height: 44px; object-fit: contain; flex: 0 0 auto; }
 
 /* ---------- 顶栏 ---------- */
 .topbar {
@@ -63,7 +53,7 @@ body {
 .logo {
   width: 38px; height: 38px;
   border-radius: 10px;
-  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  background: linear-gradient(135deg, var(--primary), var(--a5));
   color: #fff;
   font-weight: 700;
   font-size: 15px;

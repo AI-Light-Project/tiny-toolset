@@ -1,18 +1,5 @@
-/* 新工具样式 —— 已与工具集首页保持同一套设计变量，直接改内容即可 */
-:root {
-  --bg: #f5f6f8;
-  --panel: #ffffff;
-  --line: #e6e8eb;
-  --line-strong: #d5d9de;
-  --text: #1f2329;
-  --text-sub: #646a73;
-  --text-muted: #8f959e;
-  --primary: #2563eb;
-  --primary-dark: #1d4ed8;
-  --primary-soft: #eaf1ff;
-  --radius: 12px;
-  --shadow: 0 1px 3px rgba(16, 24, 40, .06), 0 1px 2px rgba(16, 24, 40, .04);
-}
+/* 新工具样式 —— 设计令牌统一由 ../../assets/css/theme.css 提供（跟随全局主题切换），
+   本文件只写布局与组件结构，不要在这里定义 :root 颜色变量。 */
 
 * { box-sizing: border-box; }
 
@@ -20,7 +7,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--font-body);
   font-size: 14px;
   line-height: 1.6;
 }

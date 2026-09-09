@@ -47,10 +47,15 @@ tools-hub/
 ├── index.html                  # 工具集首页：卡片列表 + 搜索 + 分类
 ├── README.md                   # 本文件
 ├── assets/
-│   ├── css/hub.css             # 首页样式
+│   ├── css/
+│   │   ├── theme.css           # ★ 设计令牌：全部颜色/字体/圆角/阴影变量（两套主题）
+│   │   ├── theme-maximal.css   # 多巴胺主题的质感增强（图案/粗边/堆叠阴影/动画）
+│   │   └── hub.css             # 首页布局与组件结构
+│   ├── img/                    # 卡通插画素材（Fluent Emoji，MIT，见 CREDITS.md）
 │   └── js/
 │       ├── tools.js            # ★ 工具注册表（添加工具时改这里）
-│       └── hub.js              # 首页渲染 / 搜索 / 筛选逻辑
+│       ├── hub.js              # 首页渲染 / 搜索 / 筛选逻辑
+│       └── theme.js            # 主题切换器（右上角悬浮按钮）
 ├── tools/
 │   ├── _template/              # 新工具脚手架，复制它开始
 │   └── image-watermark/        # 工具一：图片水印
@@ -120,9 +125,38 @@ cp -r tools/_template tools/my-tool
 
 ### 三条硬性约定
 
-1. **零依赖、零网络请求** —— 不引 CDN、不调外部 API
+1. **零依赖、零网络请求** —— 不引 CDN、不调外部 API（Google Fonts 为可选增强，失败自动回退系统字体）
 2. **不用 ES module** —— 用普通 `<script src>`，`type="module"` 在 `file://` 下会被 CORS 拦截
 3. **数据不出本机** —— 所有处理在浏览器完成
+
+---
+
+## 主题系统
+
+页面**右上角有悬浮切换按钮**，可在两套主题间切换，选择会自动记忆（localStorage，全站所有页面同步生效）：
+
+| 主题 | 说明 |
+|---|---|
+| **清爽**（默认） | 浅色中性底、单蓝色强调、细边框，安静耐看 |
+| **多巴胺** | 深紫黑底 + 五色系统（品红/青/黄/橙/紫），粗彩边框、堆叠硬阴影、圆点+斜纹+光斑三层图案、漂浮卡通装饰、标题渐变字动画。界面插画来自 Microsoft Fluent Emoji（MIT，见 `assets/img/CREDITS.md`） |
+
+设计要点：
+
+- **令牌集中**：所有颜色/字体/圆角/阴影变量只在 `assets/css/theme.css` 定义，组件样式只消费变量；
+  工具自己的 `style.css` 里**禁止**出现 `:root` 颜色定义
+- **质感分层**：主题特有的图案、粗边、堆叠阴影、动画放在 `theme-maximal.css`，用 `[data-theme="dopamine"]` 前缀隔离
+- **无障碍**：正文对比度保持 AAA（白字 on 深底 19.5:1）；强调色只用于装饰性文字；完整支持
+  `prefers-reduced-motion`（关闭持续动画、缩短过渡）；装饰图片均 `aria-hidden`
+- **字体**：多巴胺主题的标题字体为 Outfit / Bangers / DM Sans（Google Fonts，异步加载、失败自动回退
+  系统字体，离线使用不受影响）
+
+**如何新增一套主题**（以 `pastel` 为例）：
+
+1. `assets/css/theme.css` 里加一个 `[data-theme="pastel"] { ... }` 变量块（覆盖 `:root` 中的同名变量）
+2. 需要专属质感就在 `assets/css/theme-maximal.css` 里追加 `[data-theme="pastel"]` 规则
+3. `assets/js/theme.js` 的 `THEMES` 数组里加 `{ id: 'pastel', label: '粉彩' }`
+
+切换按钮会自动变成三态循环，无需改任何页面。
 
 ---
 
@@ -130,6 +164,12 @@ cp -r tools/_template tools/my-tool
 
 **双击打开后首页是空白？**
 检查是否用 `file://` 协议打开且浏览器拦截了本地脚本。换用上面的「本地服务器」方式访问即可。
+
+**右上角的主题按钮不见了？**
+主题脚本 `assets/js/theme.js` 加载失败所致——确认文件存在且没有被浏览器扩展拦截。
+
+**多巴胺主题下标题字体不对？**
+那是 Google Fonts 没加载出来（离线或网络受限），已自动回退到系统字体，功能不受影响；联网后刷新即恢复。
 
 **批量导出时浏览器卡住？**
 图片很大或数量很多时属正常现象，界面上有进度提示，等待完成即可。建议一次不超过 100 张。

@@ -68,9 +68,14 @@
         return '<span class="tag">' + esc(g) + '</span>';
       }).join('');
 
+      // 有插画配置则用插画，否则退回 emoji 图标
+      var iconHtml = t.illustration
+        ? '<img class="card-illo" src="' + esc(t.illustration) + '" alt="" loading="lazy">'
+        : '<div class="card-icon">' + esc(t.icon || '🧩') + '</div>';
+
       a.innerHTML =
         '<div class="card-head">' +
-          '<div class="card-icon">' + esc(t.icon || '🧩') + '</div>' +
+          iconHtml +
           '<div>' +
             '<p class="card-title">' + esc(t.name) + '</p>' +
             '<span class="card-ver">v' + esc(t.version || '0.1.0') + ' · ' + esc(t.updated || '') + '</span>' +

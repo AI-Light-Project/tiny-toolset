@@ -1,0 +1,308 @@
+/* ============================================================
+   theme-maximal.css —— 多巴胺主题的质感与装饰增强
+   仅在 <html data-theme="dopamine"> 时生效；
+   依赖 theme.css 提供的变量（--a1 ~ --a5、--font-head 等）。
+   图片引用相对于本文件：../img/
+   ============================================================ */
+
+/* ---------- 全局图案层：圆点 + 斜纹 + 光斑（三层叠加） ---------- */
+[data-theme="dopamine"] body { position: relative; }
+
+[data-theme="dopamine"] body::before {
+  content: "";
+  position: fixed; inset: 0; z-index: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle, rgba(255, 58, 242, .16) 1.5px, transparent 1.6px),
+    repeating-linear-gradient(45deg,
+      transparent 0 14px,
+      rgba(0, 245, 212, .05) 14px 28px);
+  background-size: 24px 24px, auto;
+}
+
+[data-theme="dopamine"] body::after {
+  content: "";
+  position: fixed; inset: 0; z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 15% 20%, rgba(255, 58, 242, .13), transparent 50%),
+    radial-gradient(ellipse at 85% 75%, rgba(0, 245, 212, .11), transparent 50%),
+    radial-gradient(ellipse at 55% 45%, rgba(123, 47, 255, .12), transparent 55%);
+}
+
+/* 内容抬到图案层之上 */
+[data-theme="dopamine"] .page,
+[data-theme="dopamine"] .layout,
+[data-theme="dopamine"] .topbar { position: relative; z-index: 1; }
+
+/* ---------- 首页 hero ---------- */
+.hero-illo { display: none; width: 86px; height: 86px; object-fit: contain; }
+
+[data-theme="dopamine"] .hero-logo { display: none; }
+[data-theme="dopamine"] .hero-illo {
+  display: block;
+  animation: fx-float 6s ease-in-out infinite;
+  filter: drop-shadow(0 10px 24px rgba(255, 58, 242, .45));
+}
+
+[data-theme="dopamine"] .hero h1 {
+  font-family: var(--font-head);
+  font-weight: 900;
+  letter-spacing: -.02em;
+  background: linear-gradient(90deg, var(--a1), var(--a2), var(--a3), var(--a1));
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: fx-gradient 4s ease infinite;
+}
+
+[data-theme="dopamine"] .hero-stat {
+  border: 3px solid var(--a4);
+  border-radius: 999px;
+  background: rgba(45, 27, 78, .7);
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+/* ---------- 首页：搜索与分类 ---------- */
+[data-theme="dopamine"] .search {
+  border: 4px solid var(--a2);
+  border-radius: 999px;
+  background: rgba(45, 27, 78, .6);
+  padding: 12px 18px;
+  font-weight: 700;
+  color: var(--text);
+}
+[data-theme="dopamine"] .search::placeholder { color: var(--text-muted); }
+[data-theme="dopamine"] .search:focus {
+  border-color: var(--a3);
+  box-shadow: 0 0 24px rgba(0, 245, 212, .4);
+}
+
+[data-theme="dopamine"] .chip {
+  border: 3px solid var(--a5);
+  border-radius: 999px;
+  background: rgba(45, 27, 78, .5);
+  font-weight: 700;
+}
+[data-theme="dopamine"] .chip:nth-child(2n) { border-style: dashed; }
+[data-theme="dopamine"] .chip:nth-child(3n) { border-color: var(--a4); }
+[data-theme="dopamine"] .chip:hover { border-color: var(--a3); transform: rotate(-2deg) scale(1.05); }
+[data-theme="dopamine"] .chip.active {
+  background: var(--a1);
+  border-color: var(--a3);
+  color: #fff;
+}
+
+/* ---------- 首页：工具卡片（色彩轮转 + 堆叠硬阴影 + 破格网格） ---------- */
+[data-theme="dopamine"] .card {
+  border-width: var(--border-w);
+  border-radius: var(--radius-card);
+  background: rgba(45, 27, 78, .78);
+  backdrop-filter: blur(2px);
+  box-shadow: 6px 6px 0 var(--a3), 12px 12px 0 var(--a1);
+  transform: rotate(-.8deg);
+}
+[data-theme="dopamine"] .grid .card:nth-child(5n+2) {
+  border-color: var(--a2);
+  box-shadow: 6px 6px 0 var(--a1), 12px 12px 0 var(--a5);
+  transform: rotate(1deg) translateY(8px);
+}
+[data-theme="dopamine"] .grid .card:nth-child(5n+3) {
+  border-color: var(--a3);
+  box-shadow: 6px 6px 0 var(--a4), 12px 12px 0 var(--a1);
+}
+[data-theme="dopamine"] .grid .card:nth-child(5n+4) {
+  border-color: var(--a4);
+  border-style: dashed;
+  box-shadow: 6px 6px 0 var(--a2), 12px 12px 0 var(--a3);
+  transform: rotate(-1.4deg) translateY(4px);
+}
+[data-theme="dopamine"] .grid .card:nth-child(5n) {
+  border-color: var(--a5);
+  box-shadow: 6px 6px 0 var(--a1), 12px 12px 0 var(--a2);
+  transform: rotate(1.6deg);
+}
+[data-theme="dopamine"] .card:hover {
+  transform: rotate(0deg) translateY(-6px) scale(1.03);
+  box-shadow: 10px 10px 0 var(--a3), 20px 20px 0 var(--a1),
+              0 0 44px rgba(255, 58, 242, .35);
+}
+[data-theme="dopamine"] .card:active { transform: scale(.97); }
+
+/* 卡片标题与版本 */
+[data-theme="dopamine"] .card-title {
+  font-family: var(--font-head);
+  font-weight: 900;
+  letter-spacing: .01em;
+  text-shadow: 2px 2px 0 var(--a5);
+}
+[data-theme="dopamine"] .card-ver { font-family: var(--font-mono); }
+
+/* 卡片图标：插画模式 */
+.card-illo { display: block; width: 50px; height: 50px; object-fit: contain; }
+[data-theme="dopamine"] .card-illo {
+  width: 58px; height: 58px;
+  animation: fx-bounce 3.4s ease-in-out infinite;
+}
+[data-theme="dopamine"] .card-icon {
+  border: 4px dashed var(--a2);
+  border-radius: 14px;
+  background: rgba(13, 13, 26, .4);
+}
+
+[data-theme="dopamine"] .tag {
+  border: 2px solid var(--a5);
+  background: transparent;
+  font-weight: 700;
+}
+[data-theme="dopamine"] .card-go { color: var(--a2); font-family: var(--font-head); font-weight: 800; }
+
+/* ---------- 首页：页脚 ---------- */
+[data-theme="dopamine"] .foot a { color: var(--a2); font-weight: 700; }
+[data-theme="dopamine"] .foot code { border-color: var(--line); background: rgba(45, 27, 78, .6); }
+
+/* ---------- 工具页 ---------- */
+[data-theme="dopamine"] .topbar { border-bottom: 4px solid var(--a1); }
+[data-theme="dopamine"] .tool-illo {
+  display: block;
+  animation: fx-bounce 3s ease-in-out infinite;
+  filter: drop-shadow(0 6px 14px rgba(0, 245, 212, .35));
+}
+[data-theme="dopamine"] .panel {
+  border-width: var(--border-w);
+  border-radius: 20px;
+  background: rgba(45, 27, 78, .72);
+  box-shadow: 6px 6px 0 var(--a5), 12px 12px 0 rgba(123, 47, 255, .35);
+}
+[data-theme="dopamine"] .panel-head { border-bottom: 3px dashed var(--line); }
+[data-theme="dopamine"] .panel-head h2 { font-family: var(--font-head); font-weight: 800; }
+
+[data-theme="dopamine"] .input,
+[data-theme="dopamine"] .textarea,
+[data-theme="dopamine"] select.input {
+  border: 3px solid var(--a5);
+  border-radius: 12px;
+  background: rgba(13, 13, 26, .55);
+  color: var(--text);
+  font-weight: 600;
+}
+[data-theme="dopamine"] .input:focus,
+[data-theme="dopamine"] .textarea:focus {
+  border-color: var(--a2);
+  box-shadow: 0 0 18px rgba(0, 245, 212, .35);
+}
+[data-theme="dopamine"] .input::placeholder { color: var(--text-muted); }
+[data-theme="dopamine"] .select-unit { background: var(--panel-2); color: var(--text-sub); }
+
+[data-theme="dopamine"] .dropzone { border: 4px dashed var(--a2); background: rgba(0, 245, 212, .05); }
+[data-theme="dopamine"] .dropzone.over { border-color: var(--a3); background: rgba(255, 230, 0, .08); }
+[data-theme="dopamine"] .thumb { border-width: 3px; background: var(--panel-2); }
+[data-theme="dopamine"] .thumb.active { border-color: var(--a3); }
+[data-theme="dopamine"] .badge { border: 2px solid var(--a4); background: transparent; font-family: var(--font-mono); }
+[data-theme="dopamine"] .switch { color: var(--text-sub); }
+[data-theme="dopamine"] .lbl { color: var(--text-sub); }
+[data-theme="dopamine"] .hint { color: var(--text-muted); }
+[data-theme="dopamine"] .swatches button { border-width: 2px; border-color: var(--line-strong); }
+[data-theme="dopamine"] .preview-wrap { outline: 3px dashed var(--line); outline-offset: -10px; }
+[data-theme="dopamine"] .export-bar { background: rgba(13, 13, 26, .4); border-top: 3px dashed var(--line); }
+
+/* ---------- 按钮（两个页面通用类） ---------- */
+[data-theme="dopamine"] .btn {
+  border-width: 3px;
+  border-radius: 999px;
+  font-weight: 800;
+  letter-spacing: .03em;
+  background: rgba(45, 27, 78, .6);
+  color: var(--text);
+}
+[data-theme="dopamine"] .btn-primary {
+  background: linear-gradient(90deg, var(--a1), var(--a5), var(--a2));
+  border-color: var(--a3);
+  color: #fff;
+  box-shadow: 4px 4px 0 var(--a3);
+}
+[data-theme="dopamine"] .btn-primary:hover {
+  box-shadow: 6px 6px 0 var(--a3), 0 0 28px rgba(255, 58, 242, .45);
+  transform: scale(1.05) rotate(-1deg);
+}
+[data-theme="dopamine"] .btn-outline { border-style: dashed; color: var(--a2); }
+[data-theme="dopamine"] .btn-ghost { border-width: 0; }
+[data-theme="dopamine"] .btn:hover { border-color: var(--a3); color: var(--a3); transform: translateY(-2px); }
+[data-theme="dopamine"] .btn-primary:hover { color: #fff; border-color: var(--a3); }
+[data-theme="dopamine"] .btn:active { transform: scale(.96); }
+
+/* ---------- 主题切换按钮（theme.js 注入） ---------- */
+.theme-toggle {
+  position: fixed;
+  top: 14px; right: 14px;
+  z-index: 70;
+  display: flex; align-items: center; gap: 7px;
+  border: 3px solid var(--a2);
+  border-radius: 999px;
+  background: rgba(13, 13, 26, .82);
+  color: var(--text);
+  padding: 7px 13px;
+  font-size: 12px;
+  font-weight: 800;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 var(--a3);
+}
+[data-theme="clean"] .theme-toggle {
+  border-width: 1px;
+  border-color: var(--line-strong);
+  background: #fff;
+  box-shadow: var(--shadow);
+}
+.theme-toggle:hover { transform: translateY(-2px) rotate(-2deg); border-color: var(--a3); }
+.theme-toggle .tt-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--a1);
+  box-shadow: 0 0 8px var(--a1);
+}
+[data-theme="clean"] .theme-toggle .tt-dot { background: var(--primary); box-shadow: none; }
+
+/* ---------- 漂浮装饰层（theme.js 注入） ---------- */
+.fx-layer { position: fixed; inset: 0; z-index: 60; pointer-events: none; }
+.fx-layer img {
+  position: absolute;
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, .45));
+}
+[data-theme="clean"] .fx-layer { display: none; }
+
+.fx-a { animation: fx-float 6s ease-in-out infinite; }
+.fx-b { animation: fx-float 5.2s ease-in-out infinite reverse; }
+.fx-c { animation: fx-wiggle 1.6s ease-in-out infinite; }
+.fx-d { animation: fx-bounce 2.6s ease-in-out infinite; }
+
+@keyframes fx-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-18px) rotate(6deg); }
+}
+@keyframes fx-wiggle {
+  0%, 100% { transform: rotate(-7deg); }
+  50%      { transform: rotate(7deg); }
+}
+@keyframes fx-bounce {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-10px); }
+}
+@keyframes fx-gradient {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ---------- 深色滚动条 ---------- */
+[data-theme="dopamine"] ::-webkit-scrollbar-thumb { background: #52525b; }
+[data-theme="dopamine"] ::-webkit-scrollbar-thumb:hover { background: #71717a; }
+
+/* ---------- 移动端：保持热闹，但装饰减量 ---------- */
+@media (max-width: 640px) {
+  .fx-layer img:nth-child(n+5) { display: none; }
+  [data-theme="dopamine"] .card { transform: none; }
+  [data-theme="dopamine"] .grid .card:nth-child(even) { transform: none; }
+}
