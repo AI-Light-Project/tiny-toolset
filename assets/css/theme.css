@@ -32,6 +32,16 @@
   --a4: #993c1d;  /* orange 位 */
   --a5: #534ab7;  /* purple 位 */
 
+  /* 分类磁贴配色（首页分类网格；1~4 对应注册表里分类的 color） */
+  --cat-1: #ec4899;  /* 图片：粉 */
+  --cat-2: #3b82f6;  /* 文字：蓝 */
+  --cat-3: #10b981;  /* AI：绿 */
+  --cat-4: #f59e0b;  /* 开发：琥珀 */
+  --cat-1-bg: #fde8f3;
+  --cat-2-bg: #e7f0ff;
+  --cat-3-bg: #e2f8f0;
+  --cat-4-bg: #fdf1dd;
+
   /* 形状与质感 */
   --radius: 12px;
   --radius-card: 12px;
@@ -83,6 +93,16 @@
   --primary-dark: var(--a4);
   --primary-soft: rgba(255, 58, 242, .16);
   --danger: #ff5a5a;
+
+  /* 分类磁贴配色（多巴胺：直接用五色系统的高饱和色） */
+  --cat-1: var(--a1);
+  --cat-2: var(--a2);
+  --cat-3: var(--a3);
+  --cat-4: var(--a4);
+  --cat-1-bg: rgba(255, 58, 242, .18);
+  --cat-2-bg: rgba(0, 245, 212, .16);
+  --cat-3-bg: rgba(255, 230, 0, .16);
+  --cat-4-bg: rgba(255, 107, 53, .18);
 
   /* 形状与质感 */
   --radius: 16px;

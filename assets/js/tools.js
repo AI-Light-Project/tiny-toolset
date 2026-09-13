@@ -1,12 +1,32 @@
 /**
- * 工具注册表 —— 添加新工具的唯一入口
+ * 工具注册表 + 分类体系 —— 首页数据的唯一来源
  *
  * 新增工具时：复制 tools/_template 为 tools/<your-tool>，
- * 然后在这里追加一条记录即可，首页会自动出现卡片。
+ * 然后在这里追加一条记录（并给它归属的 categoryId）即可。
  *
  * 注意：注册表用 JS 而非 JSON，是为了让 file:// 直接双击打开首页时
  * 也能正常加载（fetch 读本地 JSON 会被浏览器的 CORS 策略拦截）。
  */
+
+/* 站点元信息（首页「关于」等处使用） */
+window.HUB_META = {
+  name: '工具箱',
+  tagline: '纯前端 · 离线可用 · 数据不出本机',
+  version: '0.0.1',
+  repo: 'https://github.com/AI-Light-Project/tiny-toolset'
+};
+
+/**
+ * 分类体系（精简版：图片处理已上线，文字 / AI / 开发为预留位）
+ * color 对应 theme.css 里的 --cat-1 ~ --cat-4
+ */
+window.CATEGORIES = [
+  { id: 'image', name: '图片工具', icon: '🖼️', color: 1, desc: '图片处理、水印、压缩' },
+  { id: 'text',  name: '文字工具', icon: '✍️', color: 2, desc: '文本处理与格式转换' },
+  { id: 'ai',    name: 'AI 工具',  icon: '🤖', color: 3, desc: '智能辅助与本地模型应用' },
+  { id: 'dev',   name: '开发工具', icon: '🛠️', color: 4, desc: '开发者日常效率' }
+];
+
 window.TOOLS = [
   {
     id: 'image-watermark',
@@ -15,6 +35,7 @@ window.TOOLS = [
     icon: '💧',
     illustration: 'assets/img/droplet.png',
     category: '图片处理',
+    categoryId: 'image',
     tags: ['水印', '批量处理', 'Canvas', '隐私保护'],
     path: 'tools/image-watermark/',
     version: '1.0.0',
@@ -36,8 +57,9 @@ window.TOOLS = [
   //   icon: '🛠️',
   //   illustration: 'assets/img/xxx.png',  // 可选：卡片插画（建议 256x256 透明 PNG，见 assets/img/CREDITS.md）
   //   category: '分类名',
+  //   categoryId: 'text',                  // 归属分类，对应上方 CATEGORIES 的 id
   //   tags: ['标签1', '标签2'],
-  //   path: 'tools/your-tool/index.html',
+  //   path: 'tools/your-tool/',
   //   version: '0.1.0',
   //   updated: '2026-01-01',
   //   features: ['要点一', '要点二']

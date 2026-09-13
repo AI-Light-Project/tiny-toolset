@@ -19,7 +19,7 @@ cp -r tools/_template tools/my-tool
 
 ```
 tools-hub/
-├── index.html                 # 首页（工具列表 + 搜索 + 分类）
+├── index.html                 # 首页（分类网格 + 两级工具视图 + 搜索 + 设置）
 ├── assets/
 │   ├── css/hub.css            # 首页样式
 │   └── js/
@@ -46,9 +46,10 @@ tools-hub/
 | `name` | ✓ | 展示名称 |
 | `desc` | ✓ | 一句话描述，会显示在卡片上 |
 | `icon` | ✓ | 一个 emoji |
-| `category` | ✓ | 分类名，首页会自动生成分类筛选按钮 |
+| `category` | ✓ | 分类显示名（如「图片处理」） |
+| `categoryId` | ✓ | 归属分类 id，对应 `window.CATEGORIES` 里的 `id`（如 `image`）；首页据此归入分类网格 |
 | `tags` | | 标签数组，可被搜索命中 |
-| `path` | ✓ | 相对首页的入口路径 |
+| `path` | ✓ | 相对首页的入口路径，用目录形式（`tools/<tool-id>/`） |
 | `version` | | 语义化版本 |
 | `updated` | | 更新日期 `YYYY-MM-DD` |
 | `illustration` | | 卡片插画图片路径（相对首页，如 `assets/img/crayon.png`）；不填则显示 `icon` 的 emoji |

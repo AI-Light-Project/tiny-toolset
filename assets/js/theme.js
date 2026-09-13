@@ -1,7 +1,9 @@
 /* ============================================================
-   theme.js —— 主题切换器
+   theme.js —— 主题切换器 + 主题 API
    职责：读取/持久化主题（localStorage）→ 设置 <html data-theme>
-        → 注入右上角切换按钮 → 多巴胺主题下注入漂浮装饰层
+        → 暴露 window.THEME 供页面（如首页设置面板）调用
+        → 首页自带设置面板时不再注入悬浮按钮；工具页自动注入悬浮按钮
+        → 多巴胺主题下注入漂浮装饰层
    约定：普通 <script> 引入（非 ESM，file:// 兼容）；
         页面 <head> 里先放一段内联脚本设置初始 data-theme 防闪烁。
    ============================================================ */
@@ -26,12 +28,15 @@
   function save(id) {
     try { localStorage.setItem(KEY, id); } catch (e) { /* 隐私模式等场景忽略 */ }
   }
+  function isValid(id) {
+    for (var i = 0; i < THEMES.length; i++) {
+      if (THEMES[i].id === id) return true;
+    }
+    return false;
+  }
   function current() {
     var id = stored();
-    for (var i = 0; i < THEMES.length; i++) {
-      if (THEMES[i].id === id) return id;
-    }
-    return 'clean';
+    return isValid(id) ? id : 'clean';
   }
   function labelFor(id) {
     for (var i = 0; i < THEMES.length; i++) {
@@ -69,19 +74,36 @@
     document.body.appendChild(layer);
   }
 
+  function removeFx() {
+    var fx = document.getElementById('fx-layer');
+    if (fx) fx.remove();
+  }
+
   function apply(id) {
     document.documentElement.setAttribute('data-theme', id);
-    var fx = document.getElementById('fx-layer');
     if (id === 'dopamine') {
-      if (!fx) injectFx();
-    } else if (fx) {
-      fx.remove();
+      if (!document.getElementById('fx-layer')) injectFx();
+    } else {
+      removeFx();
     }
+    // 工具页的悬浮按钮（若存在）同步标签
     var label = document.querySelector('.theme-toggle .tt-label');
     if (label) label.textContent = labelFor(id);
+    // 通知页面（首页设置面板借此高亮当前主题）
+    try {
+      document.dispatchEvent(new CustomEvent('themechange', { detail: { theme: id } }));
+    } catch (e) { /* 老浏览器忽略 */ }
+  }
+
+  function set(id) {
+    if (!isValid(id)) return;
+    save(id);
+    apply(id);
   }
 
   function injectToggle() {
+    // 首页自带设置面板 → 不注入悬浮按钮（主题切换收进设置里）
+    if (document.getElementById('settings-panel')) return;
     if (document.querySelector('.theme-toggle')) return;
     var b = document.createElement('button');
     b.type = 'button';
@@ -94,12 +116,21 @@
         if (THEMES[i].id === current()) idx = i;
       }
       var next = THEMES[(idx + 1) % THEMES.length].id;
-      save(next);
-      apply(next);
+      set(next);
       b.setAttribute('aria-label', '切换界面主题，当前：' + labelFor(next));
     });
     document.body.appendChild(b);
   }
+
+  /* 对外 API：首页设置面板调用 */
+  window.THEME = {
+    KEY: KEY,
+    THEMES: THEMES,
+    current: current,
+    labelFor: labelFor,
+    set: set,
+    apply: apply
+  };
 
   apply(current());
   injectToggle();

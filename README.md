@@ -1,6 +1,8 @@
 # 工具箱 Tools Hub
 
 > 一个纯前端、离线可用、可扩展的小工具集合。每个工具独立成模块，双击即可打开，零依赖、零上传。
+>
+> 当前版本 **v0.0.1**
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/AI-Light-Project/tiny-toolset)
 
@@ -24,7 +26,7 @@ python -m http.server 8000
 # 浏览器访问 http://localhost:8000
 ```
 
-> 首页支持搜索（按 `/` 聚焦搜索框，`Esc` 清空）和分类筛选。
+> 首页采用「分类 → 工具」两级结构：点分类圆形图标查看该分类下的工具——**清爽主题为下拉展开，多巴胺主题为炸开散列**。搜索框支持按 `/` 聚焦、`Esc` 清空；右上角**齿轮**进入「页面设置」（主题切换 / 关于 / 清除本地数据）。
 
 ## ✨ 核心特性
 
@@ -39,7 +41,7 @@ python -m http.server 8000
 
 ```
 tiny-toolset/                # 即本仓库根目录（克隆后所在目录）
-├── index.html                  # 工具集首页：卡片列表 + 搜索 + 分类
+├── index.html                  # 工具集首页：分类网格 + 两级工具视图 + 搜索 + 设置面板
 ├── README.md                   # 本文件
 ├── vercel.json                 # Vercel 部署配置（纯静态，无构建）
 ├── assets/
@@ -49,9 +51,9 @@ tiny-toolset/                # 即本仓库根目录（克隆后所在目录）
 │   │   └── hub.css             # 首页布局与组件结构
 │   ├── img/                    # 卡通插画素材（Fluent Emoji，MIT，见 CREDITS.md）
 │   └── js/
-│       ├── tools.js            # ★ 工具注册表（添加工具时改这里）
-│       ├── hub.js              # 首页渲染 / 搜索 / 筛选逻辑
-│       └── theme.js            # 主题切换器（右上角悬浮按钮）
+│       ├── tools.js            # ★ 工具注册表 + 分类体系（添加工具时改这里）
+│       ├── hub.js              # 首页交互：分类两级视图 / 搜索 / 抽屉 / 设置面板
+│       └── theme.js            # 主题 API（首页已并入设置面板；工具页为右上角悬浮按钮）
 ├── tools/
 │   ├── _template/              # 新工具脚手架，复制它开始
 │   └── image-watermark/        # 工具一：图片水印
@@ -96,7 +98,7 @@ tiny-toolset/                # 即本仓库根目录（克隆后所在目录）
 
 ## 🎨 主题系统
 
-页面**右上角有悬浮切换按钮**，可在两套主题间切换，选择会自动记忆（localStorage，全站所有页面同步生效）：
+首页点**右上角齿轮 → 页面设置**切换主题；工具页仍用**右上角悬浮按钮**切换。选择会自动记忆（localStorage，全站所有页面同步生效）：
 
 | 主题 | 说明 |
 |---|---|
@@ -112,6 +114,7 @@ tiny-toolset/                # 即本仓库根目录（克隆后所在目录）
   `prefers-reduced-motion`（关闭持续动画、缩短过渡）；装饰图片均 `aria-hidden`
 - **字体**：多巴胺主题的标题字体为 Outfit / Bangers / DM Sans（Google Fonts，异步加载、失败自动回退
   系统字体，离线使用不受影响）
+- **首页交互随主题变化**：清爽主题点分类为「下拉展开」，多巴胺主题为「炸开散列」（工具气泡散在分类四周）
 
 **如何新增一套主题**（以 `pastel` 为例）：
 
@@ -131,22 +134,24 @@ cp -r tools/_template tools/my-tool
 
 # 2. 写你的 index.html / style.css / app.js / README.md
 
-# 3. 在 assets/js/tools.js 里追加一条
+# 3. 在 assets/js/tools.js 的 window.TOOLS 里追加一条
 {
   id: 'my-tool',
   name: '我的工具',
   desc: '一句话说明做什么',
   icon: '🛠️',
-  category: '分类名',
+  category: '文字处理',
+  categoryId: 'text',            # 归属分类，对应 window.CATEGORIES 里的 id
   tags: ['标签'],
-  path: 'tools/my-tool/index.html',
+  path: 'tools/my-tool/',        # 目录形式，以 / 结尾
   version: '0.1.0',
   updated: '2026-09-08',
   features: ['要点一', '要点二']
 }
 ```
 
-刷新首页，新卡片就出现了。
+刷新首页，新分类磁贴与工具就会自动出现。若要用全新分类，先在 `window.CATEGORIES`
+里加一条（`{ id, name, icon, color }`，`color` 取 1~4 对应 `--cat-1~4` 配色）。
 
 ### 三条硬性约定
 

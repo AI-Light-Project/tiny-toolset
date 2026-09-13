@@ -13,36 +13,144 @@
 <link rel="stylesheet" href="assets/css/hub.css">
 <link rel="stylesheet" href="assets/css/theme-maximal.css">
 </head>
-<body>
+<body class="hub">
 
-<div class="page">
-  <header class="hero">
-    <div class="hero-inner">
-      <img class="hero-illo" src="assets/img/toolbox.png" alt="" aria-hidden="true">
-      <div class="hero-logo">TB</div>
-      <div>
-        <h1>工具箱</h1>
-        <p class="sub">纯前端 · 离线可用 · 数据不出本机</p>
-      </div>
-      <div class="hero-stat" id="stat"></div>
+<div class="app">
+
+  <!-- 顶部栏：汉堡（左） + 齿轮 / 铃铛（右） -->
+  <header class="appbar">
+    <button type="button" class="icon-btn" id="menu-btn" aria-label="打开菜单" aria-controls="drawer" aria-expanded="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+        <path d="M3 6h18M3 12h18M3 18h18"/>
+      </svg>
+    </button>
+    <div class="appbar-right">
+      <button type="button" class="icon-btn" id="settings-btn" aria-label="页面设置" aria-controls="settings-panel" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
+      <button type="button" class="icon-btn" id="bell-btn" aria-label="通知（占位）">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <span class="dot" aria-hidden="true"></span>
+      </button>
     </div>
-
-    <input id="search" class="search" type="search" autocomplete="off"
-           placeholder="搜索工具名称、描述或标签…（按 / 聚焦，Esc 清空）">
-    <div class="chips" id="chips"></div>
   </header>
 
-  <main class="grid" id="grid"></main>
-  <div class="empty" id="empty" hidden>没有匹配的工具，换个关键词试试。</div>
+  <!-- 品牌 -->
+  <section class="brand">
+    <div class="brand-logo">
+      <span class="brand-mark" aria-hidden="true">TB</span>
+      <img class="brand-illo" src="assets/img/toolbox.png" alt="" aria-hidden="true">
+    </div>
+    <h1 class="brand-name">工具箱</h1>
+    <p class="brand-sub">纯前端 · 离线可用 · 数据不出本机</p>
+  </section>
+
+  <!-- 搜索 -->
+  <div class="searchbar">
+    <input id="search" class="search" type="search" autocomplete="off"
+           placeholder="搜索工具名称、描述或标签…（按 / 聚焦，Esc 清空）" aria-label="搜索工具">
+    <span class="search-ico" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="7"/>
+        <path d="m20 20-3.5-3.5"/>
+      </svg>
+    </span>
+  </div>
+
+  <!-- 一级：分类网格 -->
+  <nav class="cat-grid" id="cat-grid" aria-label="工具分类"></nav>
+
+  <!-- 二级：分类下的工具 / 搜索结果 -->
+  <section class="cat-tools" id="cat-tools" aria-live="polite">
+    <div class="cat-tools-head">
+      <button type="button" class="back-btn" id="cat-back" aria-label="返回分类列表">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M15 18l-6-6 6-6"/>
+        </svg>
+      </button>
+      <h2 class="cat-tools-title" id="cat-tools-title"></h2>
+    </div>
+    <div class="grid" id="grid"></div>
+    <div class="empty" id="empty" hidden></div>
+  </section>
 
   <footer class="foot">
-    <p>想添加新工具？复制 <code>tools/_template</code> 目录，然后按 <a href="docs/adding-tools.md">docs/adding-tools.md</a> 操作，在 <code>assets/js/tools.js</code> 里登记一下即可。</p>
-    <p>所有工具都在你的浏览器本地运行，不依赖网络，图片和文件不会上传到任何服务器。</p>
+    <p>本地运行 · 不上传任何文件 · <span id="stat"></span></p>
+    <p>想添加新工具？复制 <code>tools/_template</code> 目录，按 <a href="docs/adding-tools.md">docs/adding-tools.md</a> 操作，并在 <code>assets/js/tools.js</code> 里登记。</p>
   </footer>
+
 </div>
 
+<!-- 汉堡抽屉 -->
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="菜单" hidden>
+  <div class="drawer-head">
+    <span class="drawer-title">工具箱</span>
+    <button type="button" class="icon-btn" id="drawer-close" aria-label="关闭菜单">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <nav class="drawer-nav">
+    <button type="button" data-open="settings">⚙️ 页面设置</button>
+    <button type="button" data-open="settings">ℹ️ 关于（v<span data-ver>0.0.1</span>）</button>
+    <a href="docs/adding-tools.md">➕ 添加新工具</a>
+    <a href="https://github.com/AI-Light-Project/tiny-toolset" target="_blank" rel="noopener">🐙 GitHub 仓库</a>
+  </nav>
+</aside>
+
+<!-- 设置面板（齿轮） -->
+<section class="settings" id="settings-panel" role="dialog" aria-modal="true" aria-label="页面设置" hidden>
+  <div class="settings-card">
+    <div class="settings-head">
+      <h2>页面设置</h2>
+      <button type="button" class="icon-btn" id="settings-close" aria-label="关闭设置">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+
+    <div class="setting-row">
+      <div class="setting-label">
+        <span>界面主题</span>
+        <small>清爽主题下分类为「下拉展开」，多巴胺主题下为「炸开散列」</small>
+      </div>
+      <div class="seg-theme" id="theme-seg" role="radiogroup" aria-label="界面主题">
+        <button type="button" data-theme-id="clean" role="radio" aria-checked="false">清爽</button>
+        <button type="button" data-theme-id="dopamine" role="radio" aria-checked="false">多巴胺</button>
+      </div>
+    </div>
+
+    <div class="setting-row">
+      <div class="setting-label">
+        <span>关于</span>
+        <small>工具箱 v<span data-ver>0.0.1</span> · 纯前端 · 离线可用</small>
+      </div>
+      <a class="setting-link" href="https://github.com/AI-Light-Project/tiny-toolset" target="_blank" rel="noopener">GitHub →</a>
+    </div>
+
+    <div class="setting-row">
+      <div class="setting-label">
+        <span>本地数据</span>
+        <small>主题偏好、工具配置均只存在本机浏览器</small>
+      </div>
+      <button type="button" class="btn-danger" id="clear-data">清除本地数据</button>
+    </div>
+  </div>
+</section>
+
+<!-- 炸开层（多巴胺主题：分类点击后工具散列四周） -->
+<div class="burst-layer" id="burst-layer" hidden aria-hidden="true"></div>
+
+<!-- 轻提示 -->
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
 <script src="assets/js/tools.js"></script>
-<script src="assets/js/hub.js"></script>
 <script src="assets/js/theme.js"></script>
+<script src="assets/js/hub.js"></script>
 </body>
 </html>

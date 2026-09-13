@@ -345,3 +345,138 @@
   [data-theme="dopamine"] .grid .card:nth-child(5n+4),
   [data-theme="dopamine"] .grid .card:nth-child(5n) { transform: none; }
 }
+
+/* ============================================================
+   首页新布局 —— 多巴胺主题增强
+   顶栏 / 品牌 / 分类磁贴 / 二级列表 / 设置 / 抽屉 / 炸开层
+   注意：全部选择器都限定在 .hub 作用域内，避免影响工具页
+        （工具页共用本文件，且也有 .toast 等同名类）
+   ============================================================ */
+
+/* 顶栏图标 */
+[data-theme="dopamine"] .hub .icon-btn {
+  color: var(--text-sub);
+  border: 2px solid transparent;
+  border-radius: 14px;
+}
+[data-theme="dopamine"] .hub .icon-btn:hover {
+  background: rgba(45, 27, 78, .7);
+  border-color: var(--a2);
+  color: var(--a2);
+  transform: rotate(-4deg);
+}
+[data-theme="dopamine"] .hub .icon-btn .dot {
+  box-shadow: 0 0 0 2px var(--bg), 0 0 10px var(--a1);
+}
+
+/* 品牌 */
+[data-theme="dopamine"] .hub .brand-name {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: .02em;
+  background: linear-gradient(90deg, var(--a1), var(--a2), var(--a3), var(--a1));
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: fx-gradient 4s ease infinite;
+  transform: rotate(var(--deco-rotate));
+}
+[data-theme="dopamine"] .hub .brand-illo {
+  animation: fx-float 6s ease-in-out infinite;
+  filter: drop-shadow(0 10px 24px rgba(255, 58, 242, .45));
+}
+
+/* 分类磁贴 */
+[data-theme="dopamine"] .hub .cat-tile .cat-ico {
+  border: 3px solid rgba(255, 255, 255, .9);
+  box-shadow: 4px 4px 0 var(--a5), 0 0 22px -4px var(--cat-c, var(--a1));
+  transform: rotate(-2deg);
+}
+[data-theme="dopamine"] .hub .cat-grid .cat-tile:nth-child(2n) .cat-ico { transform: rotate(2.5deg); }
+[data-theme="dopamine"] .hub .cat-grid .cat-tile:nth-child(3n) .cat-ico { transform: rotate(-3.5deg); }
+[data-theme="dopamine"] .hub .cat-tile:hover .cat-ico { transform: rotate(0deg) scale(1.06); }
+[data-theme="dopamine"] .hub .cat-tile .cat-name { font-family: var(--font-head); font-weight: 800; }
+[data-theme="dopamine"] .hub .cat-tile.is-empty { opacity: .6; }
+[data-theme="dopamine"] .hub .cat-tile.is-active .cat-ico { box-shadow: 0 0 0 3px var(--bg), 0 0 0 6px var(--a3); }
+
+/* 二级标题 / 返回 */
+[data-theme="dopamine"] .hub .cat-tools-title {
+  font-family: var(--font-head);
+  font-weight: 900;
+  text-shadow: 2px 2px 0 var(--a5);
+}
+[data-theme="dopamine"] .hub .cat-tools-title .muted { font-family: var(--font-mono); text-shadow: none; }
+[data-theme="dopamine"] .hub .back-btn {
+  border: 3px solid var(--a2);
+  border-radius: 12px;
+  background: rgba(13, 13, 26, .5);
+  color: var(--a2);
+}
+
+/* 设置面板 */
+[data-theme="dopamine"] .hub .settings-card {
+  border: 4px solid var(--a1);
+  border-radius: 24px;
+  background: rgba(45, 27, 78, .96);
+  box-shadow: 8px 8px 0 var(--a3), 16px 16px 0 var(--a1);
+}
+[data-theme="dopamine"] .hub .settings-head h2 { font-family: var(--font-head); font-weight: 900; }
+[data-theme="dopamine"] .hub .setting-row { border-top: 3px dashed var(--line); }
+[data-theme="dopamine"] .hub .seg-theme { background: rgba(13, 13, 26, .6); border: 3px solid var(--a5); }
+[data-theme="dopamine"] .hub .seg-theme button { font-weight: 800; }
+[data-theme="dopamine"] .hub .seg-theme button[aria-checked="true"] {
+  background: linear-gradient(90deg, var(--a1), var(--a5));
+  color: #fff;
+}
+[data-theme="dopamine"] .hub .btn-danger {
+  border-width: 3px; border-style: dashed; border-color: var(--a4);
+  color: var(--a4); border-radius: 999px;
+}
+[data-theme="dopamine"] .hub .btn-danger:hover { background: var(--a4); color: #0d0d1a; }
+[data-theme="dopamine"] .hub .setting-link { color: var(--a2); }
+
+/* 抽屉 */
+[data-theme="dopamine"] .hub .drawer {
+  border-right: 4px solid var(--a1);
+  background: rgba(45, 27, 78, .98);
+}
+[data-theme="dopamine"] .hub .drawer-nav a:hover,
+[data-theme="dopamine"] .hub .drawer-nav button:hover { background: rgba(13, 13, 26, .5); color: var(--a2); }
+
+/* 炸开气泡 */
+[data-theme="dopamine"] .hub .burst-bubble {
+  border: 4px solid var(--a3);
+  background: linear-gradient(160deg, var(--a5), var(--panel));
+  box-shadow: 5px 5px 0 var(--a1), 0 0 26px -4px var(--a3);
+  color: #fff;
+  font-family: var(--font-head);
+}
+[data-theme="dopamine"] .hub .burst-bubble.is-empty {
+  background: rgba(45, 27, 78, .82);
+  border: 3px dashed var(--a5);
+  box-shadow: none;
+  color: var(--text-sub);
+  font-family: var(--font-body);
+}
+
+/* 轻提示（仅首页，工具页有各自的 .toast） */
+[data-theme="dopamine"] .hub .toast {
+  background: var(--a3);
+  color: #0d0d1a;
+  font-family: var(--font-head);
+  font-weight: 800;
+  box-shadow: 4px 4px 0 var(--a1);
+}
+
+/* 页脚 */
+[data-theme="dopamine"] .hub .foot { border-top: 3px dashed var(--line); }
+
+/* 窄屏收敛 */
+@media (max-width: 640px) {
+  [data-theme="dopamine"] .hub .settings-card {
+    border-radius: 24px 24px 0 0;
+    box-shadow: 4px 4px 0 var(--a3);
+  }
+}
