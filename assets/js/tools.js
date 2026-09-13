@@ -16,7 +16,7 @@ window.TOOLS = [
     illustration: 'assets/img/droplet.png',
     category: '图片处理',
     tags: ['水印', '批量处理', 'Canvas', '隐私保护'],
-    path: 'tools/image-watermark/index.html',
+    path: 'tools/image-watermark/',
     version: '1.0.0',
     updated: '2026-09-08',
     features: [

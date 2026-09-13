@@ -14,7 +14,7 @@ Fork 本项目（或把仓库连到 Vercel）后导入即可一键部署。无�
 
 ### 方式一：直接打开（推荐，无需任何环境）
 
-双击仓库根目录下的 `index.html`，浏览器会打开工具列表页，点击卡片进入对应工具。单个工具也可单独打开，例如 `tools/image-watermark/index.html`。
+双击仓库根目录下的 `index.html`，浏览器会打开工具列表页，点击卡片进入对应工具。单个工具也可单独打开，例如 `tools/image-watermark/`（目录形式，部署后由 Vercel 自动定位 index.html）。
 
 ### 方式二：本地服务器（可选）
 
@@ -69,7 +69,7 @@ tiny-toolset/                # 即本仓库根目录（克隆后所在目录）
 
 | 工具 | 说明 | 入口 |
 |---|---|---|
-| 💧 图片水印 | 批量加文字 / Logo 水印，九宫格定位 + 平铺防截图 | [打开](tools/image-watermark/index.html) |
+| 💧 图片水印 | 批量加文字 / Logo 水印，九宫格定位 + 平铺防截图 | [打开](tools/image-watermark/) |
 
 ### 💧 图片水印工具
 
@@ -157,6 +157,10 @@ cp -r tools/_template tools/my-tool
 ## ☁️ Vercel 部署说明
 
 本项目是纯静态站点（无构建步骤），`vercel.json` 已声明 `buildCommand: null` + `outputDirectory: "."`。
+
+> **关键**：`vercel.json` 里必须保留 `trailingSlash: true`。否则 Vercel 的 `cleanUrls` 会把 `tools/<tool>/index.html`
+> 重定向成无尾斜杠的 `tools/<tool>`，浏览器误把工具名当文件，导致同目录的 `style.css` / `app.js` 被解析到上一级 `tools/` 而 404。
+> 工具页内部一律用 `../../assets/...` 引用仓库根资源、用 `style.css` / `app.js` 引用同目录资源，配合尾斜杠即可在 `file://` 与部署后都正常。
 
 ### 方式一：GitHub 导入（推荐）
 

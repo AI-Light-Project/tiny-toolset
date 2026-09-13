@@ -3,6 +3,7 @@
   "buildCommand": null,
   "outputDirectory": ".",
   "cleanUrls": true,
+  "trailingSlash": true,
   "headers": [
     {
       "source": "/(.*)\\.(js|css|html|png|jpg|jpeg|webp|svg|woff2?|json|ico)$",
