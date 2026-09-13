@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- 暗底圆角磁贴 + 多巴胺彩色边框 -->
+  <rect x="4" y="4" width="56" height="56" rx="15" fill="#0D0D1A" stroke="#ff4d8d" stroke-width="3"/>
+  <!-- 工具箱提手 -->
+  <rect x="25" y="18" width="14" height="9" rx="3" fill="#fde047"/>
+  <!-- 工具箱盖 -->
+  <rect x="13" y="26" width="38" height="10" rx="3" fill="#ff4d8d"/>
+  <!-- 工具箱主体 -->
+  <rect x="15" y="35" width="34" height="17" rx="4" fill="#22d3ee"/>
+  <!-- 锁扣 -->
+  <rect x="29" y="38" width="6" height="7" rx="1.5" fill="#0D0D1A"/>
+  <!-- 多巴胺小星点缀 -->
+  <path d="M50 13 l1.8 4.6 4.6 1.8 -4.6 1.8 -1.8 4.6 -1.8 -4.6 -4.6 -1.8 4.6 -1.8 z" fill="#a855f7"/>
+</svg>
