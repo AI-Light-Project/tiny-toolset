@@ -95,6 +95,269 @@
     }, 300);
   }
 
+  // ============ 配置方案（预设 / 导入导出） ============
+  const PRESET_KEY = 'wm_presets';       // 用户方案：[{ id, name, cfg, updated }]
+  const ACTIVE_KEY = 'wm_preset_active'; // 当前选中的方案 id，'' = 自定义
+  const DIRTY_KEY = 'wm_preset_dirty';   // '1' = 选中方案后又手动改过，尚未存回方案
+  const CFG_VERSION = 1;
+
+  // 出厂内置模板：只读，用来演示各项参数的效果，也能"另存为"自己的方案
+  const BUILTIN = [
+    {
+      id: 'builtin:anti-theft',
+      name: '防盗图平铺',
+      cfg: {
+        mode: 'text',
+        text: { content: '仅供本人使用 · 请勿转载', size: 4, unit: '%', color: '#ffffff', opacity: 22, stroke: { on: true, color: '#000000', width: 0.12 }, shadow: { on: false } },
+        layout: { position: 'tile', angle: -30, gapX: 55, gapY: 55, stagger: true, margin: 4, marginUnit: '%' }
+      }
+    },
+    {
+      id: 'builtin:signature',
+      name: '右下角签名',
+      cfg: {
+        mode: 'text',
+        text: { content: '© 你的名字', size: 3, unit: '%', color: '#ffffff', opacity: 75, stroke: { on: true, color: '#000000', width: 0.1 }, shadow: { on: false } },
+        layout: { position: 'br', angle: 0, margin: 4, marginUnit: '%' }
+      }
+    },
+    {
+      id: 'builtin:logo-center',
+      name: '居中半透明 Logo',
+      cfg: {
+        mode: 'image',
+        image: { width: 35, unit: '%', opacity: 18 },
+        layout: { position: 'mc', angle: 0, margin: 4, marginUnit: '%' }
+      }
+    },
+    {
+      id: 'builtin:dense',
+      name: '斜向密铺防裁剪',
+      cfg: {
+        mode: 'text',
+        text: { content: '样品 · 请勿外传', size: 3.2, unit: '%', color: '#000000', opacity: 16, stroke: { on: false }, shadow: { on: false } },
+        layout: { position: 'tile', angle: -45, gapX: 30, gapY: 30, stagger: true, margin: 4, marginUnit: '%' }
+      }
+    }
+  ];
+
+  let activePreset = '';    // 当前方案 id
+  let presetDirty = false;  // 选中方案后是否又手动改过配置
+
+  function uid() { return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+  // 用默认配置补齐缺失字段，保证老配置 / 手改的 JSON 也能正常跑
+  function normalizeCfg(raw) {
+    const base = JSON.parse(JSON.stringify(DEFAULTS));
+    if (raw && typeof raw === 'object') mergeDeep(base, raw);
+    return base;
+  }
+
+  function loadPresets() {
+    try {
+      const a = JSON.parse(localStorage.getItem(PRESET_KEY) || '[]');
+      return Array.isArray(a) ? a.filter((p) => p && typeof p === 'object' && p.id && p.name) : [];
+    } catch (e) { return []; }
+  }
+  function savePresets(list) {
+    try { localStorage.setItem(PRESET_KEY, JSON.stringify(list)); return true; }
+    catch (e) { toast('方案保存失败：本地存储不可用'); return false; }
+  }
+  function allPresets() {
+    return BUILTIN
+      .map((b) => ({ id: b.id, name: b.name, cfg: normalizeCfg(b.cfg), builtin: true }))
+      .concat(loadPresets().map((p) => ({ id: p.id, name: p.name, cfg: normalizeCfg(p.cfg), updated: p.updated, builtin: false })));
+  }
+  function findPreset(id) {
+    if (!id) return null;
+    return allPresets().filter((p) => p.id === id)[0] || null;
+  }
+  function setActive(id) {
+    activePreset = id || '';
+    try { localStorage.setItem(ACTIVE_KEY, activePreset); } catch (e) { /* 忽略 */ }
+  }
+  function setDirty(on) {
+    presetDirty = !!on;
+    try { localStorage.setItem(DIRTY_KEY, presetDirty ? '1' : ''); } catch (e) { /* 忽略 */ }
+  }
+
+  function renderPresetSelect() {
+    const sel = $('#presetSelect');
+    if (!sel) return;
+    const cur = activePreset;
+    const opt = (v, label) => { const o = document.createElement('option'); o.value = v; o.textContent = label; return o; };
+
+    sel.innerHTML = '';
+    sel.appendChild(opt('', '自定义（未保存）'));
+
+    const gb = document.createElement('optgroup');
+    gb.label = '内置模板';
+    BUILTIN.forEach((b) => gb.appendChild(opt(b.id, b.name)));
+    sel.appendChild(gb);
+
+    const mine = loadPresets();
+    if (mine.length) {
+      const gm = document.createElement('optgroup');
+      gm.label = '我的方案';
+      mine.forEach((p) => gm.appendChild(opt(p.id, p.name)));
+      sel.appendChild(gm);
+    }
+
+    sel.value = cur;
+    if (sel.value !== cur) sel.value = '';   // 方案已被删除时回落到"自定义"
+
+    if (presetDirty && cur) {
+      const o = sel.options[sel.selectedIndex];
+      if (o && o.value === cur) o.textContent += ' · 已改动';
+    }
+
+    const p = findPreset(cur);
+    const lock = !p || p.builtin;            // 内置模板不可覆盖 / 改名 / 删除
+    $('#btnPresetUpdate').disabled = lock;
+    $('#btnPresetRename').disabled = lock;
+    $('#btnPresetDelete').disabled = lock;
+  }
+
+  // 配置被改动：同步界面 + 标记"已改动"
+  function onCfgChanged() {
+    if (activePreset && !presetDirty) { setDirty(true); renderPresetSelect(); }
+    syncUI(); scheduleRender(); saveCfg();
+  }
+
+  function applyPreset(id, silent) {
+    const p = findPreset(id);
+    if (!p) return;
+    cfg = normalizeCfg(p.cfg);
+    setActive(id);
+    setDirty(false);
+    syncUI(); scheduleRender(); saveCfg(); renderPresetSelect();
+    if (cfg.mode === 'image' && !state.logo) toast('已切到「' + p.name + '」，Logo 图片需重新选择');
+    else if (!silent) toast('已应用方案：' + p.name);
+  }
+
+  function uniqueName(list, name) {
+    let n = name, i = 2;
+    while (list.some((p) => p.name === n)) { n = name + ' ' + i; i++; }
+    return n;
+  }
+
+  function presetSaveAs() {
+    const list = loadPresets();
+    const name = (window.prompt('给这套配置起个名字：', '方案 ' + (list.length + 1)) || '').trim();
+    if (!name) return;
+    const p = { id: uid(), name: uniqueName(list, name), cfg: JSON.parse(JSON.stringify(cfg)), updated: Date.now() };
+    list.push(p);
+    if (!savePresets(list)) return;
+    setActive(p.id);
+    setDirty(false);
+    renderPresetSelect();
+    toast('已保存为「' + p.name + '」');
+  }
+
+  function presetUpdate() {
+    const p = findPreset(activePreset);
+    if (!p || p.builtin) return;
+    if (!window.confirm('用当前配置覆盖「' + p.name + '」？')) return;
+    const list = loadPresets();
+    for (let i = 0; i < list.length; i++) {
+      if (list[i].id === p.id) { list[i].cfg = JSON.parse(JSON.stringify(cfg)); list[i].updated = Date.now(); break; }
+    }
+    if (!savePresets(list)) return;
+    setDirty(false);
+    renderPresetSelect();
+    toast('已覆盖保存「' + p.name + '」');
+  }
+
+  function presetRename() {
+    const p = findPreset(activePreset);
+    if (!p || p.builtin) return;
+    const name = (window.prompt('重命名方案：', p.name) || '').trim();
+    if (!name || name === p.name) return;
+    const list = loadPresets();
+    for (let i = 0; i < list.length; i++) {
+      if (list[i].id === p.id) { list[i].name = uniqueName(list.filter((x) => x.id !== p.id), name); break; }
+    }
+    if (!savePresets(list)) return;
+    renderPresetSelect();
+    toast('已重命名为「' + name + '」');
+  }
+
+  function presetDelete() {
+    const p = findPreset(activePreset);
+    if (!p || p.builtin) return;
+    if (!window.confirm('删除方案「' + p.name + '」？此操作不可撤销。')) return;
+    const list = loadPresets().filter((x) => x.id !== p.id);
+    if (!savePresets(list)) return;
+    setActive('');
+    setDirty(false);
+    renderPresetSelect();
+    toast('已删除「' + p.name + '」');
+  }
+
+  function downloadJSON(filename, text) {
+    const url = URL.createObjectURL(new Blob([text], { type: 'application/json;charset=utf-8' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  function dateStamp() {
+    const d = new Date();
+    const p = (n) => (n < 10 ? '0' : '') + n;
+    return d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate());
+  }
+
+  function presetExport() {
+    const p = findPreset(activePreset);
+    const name = (p && !p.builtin) ? p.name : (p ? p.name + '（内置）' : '当前配置');
+    const payload = {
+      _type: 'wm-preset',
+      version: CFG_VERSION,
+      name: name,
+      exportedAt: new Date().toISOString(),
+      cfg: JSON.parse(JSON.stringify(cfg))
+    };
+    downloadJSON('水印配置-' + name + '-' + dateStamp() + '.json', JSON.stringify(payload, null, 2));
+    toast('已导出 JSON');
+  }
+
+  function presetImport(file) {
+    const r = new FileReader();
+    r.onload = () => {
+      let data;
+      try { data = JSON.parse(String(r.result)); }
+      catch (e) { toast('不是合法的 JSON 文件'); return; }
+
+      let incoming = [];
+      if (Array.isArray(data)) incoming = data;
+      else if (data && Array.isArray(data.presets)) incoming = data.presets;
+      else if (data && typeof data === 'object') incoming = [data];
+
+      const list = loadPresets();
+      let added = 0, lastId = '';
+      incoming.forEach((it) => {
+        if (!it || typeof it !== 'object') return;
+        const raw = it.cfg || (it.mode || it.layout || it.text ? it : null);
+        if (!raw) return;
+        const p = { id: uid(), name: '', cfg: normalizeCfg(raw), updated: Date.now() };
+        p.name = uniqueName(list, String(it.name || '导入方案').trim() || '导入方案');
+        list.push(p);
+        lastId = p.id;
+        added++;
+      });
+
+      if (!added) { toast('文件里没有识别到配置项'); return; }
+      if (!savePresets(list)) return;
+      applyPreset(lastId, true);
+      toast('已导入 ' + added + ' 套方案');
+    };
+    r.onerror = () => toast('文件读取失败');
+    r.readAsText(file);
+  }
+
   function withAlpha(hex, a) {
     const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex || '');
     if (!m) return hex;
@@ -638,14 +901,14 @@
       b.addEventListener('click', () => {
         if (cfg.mode === 'image' && b.dataset.mode === 'image' && !state.logo) pickLogo();
         cfg.mode = b.dataset.mode;
-        syncUI(); scheduleRender(); saveCfg();
+        onCfgChanged();
       });
     });
 
     // 位置
     const setPos = (pos) => {
       cfg.layout.position = pos;
-      syncUI(); scheduleRender(); saveCfg();
+      onCfgChanged();
     };
     document.querySelectorAll('#grid9 button').forEach((b) => b.addEventListener('click', () => setPos(b.dataset.pos)));
     document.querySelector('.tile-btn').addEventListener('click', () => setPos('tile'));
@@ -656,7 +919,7 @@
         cfg.layout.angle = parseFloat(b.dataset.angle);
         const el = $('#angle');
         el.value = cfg.layout.angle;
-        syncUI(); scheduleRender(); saveCfg();
+        onCfgChanged();
       });
     });
 
@@ -665,7 +928,7 @@
       b.addEventListener('click', () => {
         cfg.text.color = b.dataset.color;
         $('#textColor').value = b.dataset.color;
-        syncUI(); scheduleRender(); saveCfg();
+        onCfgChanged();
       });
     });
 
@@ -742,8 +1005,28 @@
     // 恢复默认
     $('#btnReset').addEventListener('click', () => {
       cfg = JSON.parse(JSON.stringify(DEFAULTS));
-      syncUI(); scheduleRender(); saveCfg();
+      setActive('');
+      setDirty(false);
+      syncUI(); scheduleRender(); saveCfg(); renderPresetSelect();
       toast('已恢复默认设置');
+    });
+
+    // 配置方案
+    $('#presetSelect').addEventListener('change', (e) => {
+      const v = e.target.value;
+      if (!v) { setActive(''); setDirty(false); renderPresetSelect(); return; }
+      applyPreset(v);
+    });
+    $('#btnPresetSave').addEventListener('click', presetSaveAs);
+    $('#btnPresetUpdate').addEventListener('click', presetUpdate);
+    $('#btnPresetRename').addEventListener('click', presetRename);
+    $('#btnPresetDelete').addEventListener('click', presetDelete);
+    $('#btnPresetExport').addEventListener('click', presetExport);
+    $('#btnPresetImport').addEventListener('click', () => $('#presetFile').click());
+    $('#presetFile').addEventListener('change', (e) => {
+      const f = e.target.files && e.target.files[0];
+      if (f) presetImport(f);
+      e.target.value = '';
     });
 
     // 窗口缩放重绘
@@ -764,6 +1047,21 @@
   syncUI();
   bind();
   initViewTabs();
+  // 恢复上次的方案：改过但没存回方案的，保留改动并标记"已改动"
+  (function initPreset() {
+    let saved = '', dirty = '';
+    try {
+      saved = localStorage.getItem(ACTIVE_KEY) || '';
+      dirty = localStorage.getItem(DIRTY_KEY) || '';
+    } catch (e) { /* 忽略 */ }
+    if (saved && findPreset(saved)) {
+      if (dirty === '1') { activePreset = saved; setDirty(true); renderPresetSelect(); }
+      else applyPreset(saved, true);
+    } else {
+      setActive('');
+      renderPresetSelect();
+    }
+  })();
   renderThumbs();
   renderPreview();
 })();

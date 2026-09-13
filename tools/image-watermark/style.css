@@ -530,3 +530,15 @@ input[type=range] {
   .topbar h1 { font-size: 14px; }
   .grid9 { width: 100%; }
 }
+
+/* ---------- 配置方案 ---------- */
+.preset-group {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+}
+.preset-group .group-title { margin-bottom: 8px; }
+.preset-group select.input { width: 100%; }
+.preset-actions { margin-top: 8px; }
+.preset-actions .btn { flex: 1 1 0; min-width: 0; padding-left: 4px; padding-right: 4px; }

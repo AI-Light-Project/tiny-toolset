@@ -91,6 +91,26 @@
 
     <div class="config-scroll">
 
+      <!-- 配置方案 -->
+      <div class="group preset-group">
+        <div class="group-title">配置方案</div>
+        <div class="row">
+          <select id="presetSelect" class="input" aria-label="配置方案"></select>
+        </div>
+        <div class="row row-inline preset-actions">
+          <button id="btnPresetSave" class="btn btn-mini">存为新方案</button>
+          <button id="btnPresetUpdate" class="btn btn-mini">覆盖保存</button>
+          <button id="btnPresetRename" class="btn btn-mini btn-ghost">重命名</button>
+          <button id="btnPresetDelete" class="btn btn-mini btn-ghost">删除</button>
+        </div>
+        <div class="row row-inline preset-actions">
+          <button id="btnPresetExport" class="btn btn-mini btn-outline">导出 JSON</button>
+          <button id="btnPresetImport" class="btn btn-mini btn-outline">导入 JSON</button>
+          <input type="file" id="presetFile" accept=".json,application/json" hidden>
+        </div>
+        <p class="hint">当前设置会自动记住。把常用的配置存成方案，下次一键切换；JSON 可备份或搬到别的设备。</p>
+      </div>
+
       <!-- 模式 -->
       <div class="group">
         <div class="group-title">水印类型</div>
