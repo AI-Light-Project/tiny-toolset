@@ -150,26 +150,90 @@
     }, 30);
   }
 
-  /* ---------------- 炸开（多巴胺主题） ---------------- */
+  /* ---------------- 光束扇形炸开（多巴胺主题） ----------------
+     分类磁贴当"光源"，朝视野开阔的一侧射出一道扇形光束，
+     该分类下的工具沿光束的角度范围依次展开，并各有一条光射线连回光源。 */
   function openBurst(c, btn) {
     if (!el.burst) { toggleAccordion(c); return; }
     closeTools();
 
+    var W = window.innerWidth, H = window.innerHeight;
     var rect = btn.getBoundingClientRect();
     var cx = rect.left + rect.width / 2;
     var cy = rect.top + rect.height / 2;
+
     var list = toolsOf(c.id);
     var items = list.length ? list : [{ empty: true, name: '敬请期待', icon: '✨' }];
     var n = items.length;
-    var R = Math.min(150, Math.max(96, window.innerWidth * 0.34));
 
+    // 1) 发射方向（conic 角度制：0=上，90=右，180=下，270=左，顺时针）
+    //    磁贴下半屏 → 朝上打；贴左右边 → 朝屏幕内侧倾斜
+    var MX = 52, MT = 76, MB = 72;                       // 视口边距
+    var down = cy < H * 0.56;
+    var bias = cx < W * 0.3 ? -1 : (cx > W * 0.7 ? 1 : 0);
+    var base = (down ? 180 : 0) + (down ? 1 : -1) * bias * 26;
+
+    // 2) 扇形张角：工具越多张得越开，但控制在 76°~152°
+    var spread = n > 1 ? clamp(30 * n, 76, 152) : 44;
+    var a0 = base - spread / 2;
+
+    // 3) 半径：理想值 → 按视口逐角度收敛，保证整个扇形都在屏幕内
+    //    工具越多，弧长越紧张 → 半径相应放大，避免气泡挤在一起
+    var R0 = Math.min(210, Math.max(118, Math.min(W, H) * 0.34));
+    R0 = Math.min(R0 * (1 + 0.05 * Math.max(0, n - 3)), Math.min(W, H) * 0.44);
+    var R = R0;
+    var angs = [];
+    for (var k = 0; k < n; k++) {
+      var deg = n > 1 ? a0 + k * (spread / (n - 1)) : base;
+      angs.push(deg);
+      var rad = deg * Math.PI / 180;
+      var sx = Math.sin(rad), sy = -Math.cos(rad);       // 屏幕坐标方向向量
+      if (sx > 0.001) R = Math.min(R, (W - MX - cx) / sx);
+      else if (sx < -0.001) R = Math.min(R, (cx - MX) / -sx);
+      if (sy > 0.001) R = Math.min(R, (H - MB - cy) / sy);
+      else if (sy < -0.001) R = Math.min(R, (cy - MT) / -sy);
+    }
+    R = Math.max(76, Math.min(R0, R));
+
+    // 4) 绘制
     el.burst.innerHTML = '';
     el.burst.hidden = false;
+    var colorVar = 'var(--cat-' + (c.color || 1) + ')';
+
+    var beam = document.createElement('div');
+    beam.className = 'burst-beam';
+    beam.style.left = cx + 'px';
+    beam.style.top = cy + 'px';
+    beam.style.setProperty('--bl', (R + 92).toFixed(1) + 'px');
+    beam.style.setProperty('--a0', a0.toFixed(1) + 'deg');
+    beam.style.setProperty('--spread', spread.toFixed(1) + 'deg');
+    beam.style.setProperty('--cat-c', colorVar);
+    el.burst.appendChild(beam);
+
+    var core = document.createElement('div');
+    core.className = 'burst-core';
+    core.style.left = cx + 'px';
+    core.style.top = cy + 'px';
+    core.style.setProperty('--cat-c', colorVar);
+    el.burst.appendChild(core);
 
     items.forEach(function (t, i) {
-      var ang = (-90 + i * (360 / n)) * Math.PI / 180;
-      var bx = clamp(cx + Math.cos(ang) * R, 52, window.innerWidth - 52);
-      var by = clamp(cy + Math.sin(ang) * R, 60, window.innerHeight - 60);
+      var deg = angs[i];
+      var rad = deg * Math.PI / 180;
+      var rr = R * (i % 2 === 1 ? 0.9 : 1);              // 轻微错落，避免相邻气泡贴太紧
+      var dx = Math.sin(rad) * rr;
+      var dy = -Math.cos(rad) * rr;
+      var delay = 110 + i * 60;
+
+      var ray = document.createElement('div');
+      ray.className = 'burst-ray';
+      ray.style.setProperty('--rx', cx.toFixed(1) + 'px');
+      ray.style.setProperty('--ry', (cy - 1).toFixed(1) + 'px');
+      ray.style.setProperty('--len', (rr - 30).toFixed(1) + 'px');
+      ray.style.setProperty('--a', deg.toFixed(1) + 'deg');
+      ray.style.setProperty('--cat-c', colorVar);
+      ray.style.setProperty('--delay', delay + 'ms');
+      el.burst.appendChild(ray);
 
       var node;
       if (t.empty) {
@@ -180,11 +244,11 @@
         node.className = 'burst-bubble';
         node.href = t.path;
       }
-      node.style.left = bx + 'px';
-      node.style.top = by + 'px';
-      node.style.setProperty('--dx', (bx - cx).toFixed(1) + 'px');
-      node.style.setProperty('--dy', (by - cy).toFixed(1) + 'px');
-      node.style.setProperty('--delay', (i * 55) + 'ms');
+      node.style.left = cx + 'px';
+      node.style.top = cy + 'px';
+      node.style.setProperty('--dx', dx.toFixed(1) + 'px');
+      node.style.setProperty('--dy', dy.toFixed(1) + 'px');
+      node.style.setProperty('--delay', delay + 'ms');
       node.innerHTML = '<span class="bb-ico" aria-hidden="true">' + esc(t.icon || '🧩') + '</span>' +
                        '<span class="bb-name">' + esc(t.name || '') + '</span>';
       el.burst.appendChild(node);

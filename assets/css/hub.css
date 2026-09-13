@@ -331,7 +331,9 @@ body {
 }
 .btn-danger:hover { background: var(--danger); color: #fff; }
 
-/* ---------- 炸开层（多巴胺主题） ---------- */
+/* ---------- 光束扇形炸开（多巴胺主题） ----------
+   点击分类 → 分类像探照灯一样射出一道扇形光束，
+   该分类下的工具沿光束范围扇形展开，每个工具还有一条光射线连回光源。 */
 .burst-layer {
   position: fixed; inset: 0; z-index: 85;
   background: rgba(13, 13, 26, .38);
@@ -340,6 +342,76 @@ body {
 .burst-layer[hidden] { display: none; }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 
+.burst-beam, .burst-core, .burst-ray { pointer-events: none; }
+
+/* 扇形光束：以分类磁贴为圆心，朝 --a0 方向张开 --spread 度 */
+.burst-beam {
+  position: fixed; left: 0; top: 0;
+  width: calc(var(--bl, 240px) * 2);
+  height: calc(var(--bl, 240px) * 2);
+  margin-left: calc(var(--bl, 240px) * -1);
+  margin-top: calc(var(--bl, 240px) * -1);
+  border-radius: 50%;
+  background: conic-gradient(from var(--a0, 150deg),
+    var(--cat-c, var(--primary)) 0deg,
+    var(--cat-c, var(--primary)) calc(var(--spread, 120deg) * .62),
+    var(--cat-c, var(--primary)) var(--spread, 120deg),
+    transparent var(--spread, 120deg));
+  -webkit-mask-image: radial-gradient(circle at 50% 50%,
+    transparent 0 4%, #000 13%, rgba(0, 0, 0, .78) 44%,
+    rgba(0, 0, 0, .3) 68%, transparent 84%);
+  mask-image: radial-gradient(circle at 50% 50%,
+    transparent 0 4%, #000 13%, rgba(0, 0, 0, .78) 44%,
+    rgba(0, 0, 0, .3) 68%, transparent 84%);
+  transform-origin: 50% 50%;
+  opacity: .55;
+  animation: beam-open .5s cubic-bezier(.14, .82, .28, 1) both;
+}
+@keyframes beam-open {
+  from { transform: scale(.28) rotate(calc(var(--spread, 120deg) * -.12)); opacity: 0; }
+  60%  { opacity: .78; }
+  to   { transform: scale(1) rotate(0deg); opacity: .55; }
+}
+
+/* 光源：分类磁贴位置的一颗亮点 + 一圈扩散光环 */
+.burst-core {
+  position: fixed; left: 0; top: 0;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%,
+    #fff 0%, var(--cat-c, var(--primary)) 46%, transparent 74%);
+  transform: translate(-50%, -50%);
+  animation: core-pop .46s cubic-bezier(.2, .9, .3, 1.4) both;
+}
+.burst-core::after {
+  content: '';
+  position: absolute; left: 50%; top: 50%;
+  width: 100%; height: 100%; border-radius: 50%;
+  border: 2px solid var(--cat-c, var(--primary));
+  transform: translate(-50%, -50%) scale(1);
+  animation: core-ring .85s ease-out .08s both;
+}
+@keyframes core-pop { from { transform: translate(-50%, -50%) scale(.3); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+@keyframes core-ring {
+  from { transform: translate(-50%, -50%) scale(.6); opacity: .9; }
+  to   { transform: translate(-50%, -50%) scale(4.6); opacity: 0; }
+}
+
+/* 光射线：从光源连到每个工具气泡 */
+.burst-ray {
+  position: fixed; left: 0; top: 0; z-index: 1;
+  height: 2px; width: var(--len, 120px);
+  transform-origin: 0 50%;
+  background: linear-gradient(90deg, var(--cat-c, var(--primary)) 0%, var(--cat-c, var(--primary)) 38%, transparent 100%);
+  opacity: .7;
+  animation: ray-out .46s cubic-bezier(.2, .8, .3, 1) both;
+  animation-delay: var(--delay, 0ms);
+}
+@keyframes ray-out {
+  from { transform: translate(var(--rx, 0px), var(--ry, 0px)) rotate(calc(var(--a, 180deg) - 90deg)) scaleX(0); opacity: 0; }
+  to   { transform: translate(var(--rx, 0px), var(--ry, 0px)) rotate(calc(var(--a, 180deg) - 90deg)) scaleX(1); opacity: .7; }
+}
+
+/* 工具气泡：落在光束的扇形范围内 */
 .burst-bubble {
   position: fixed; left: 0; top: 0;
   width: 84px; height: 84px;
@@ -349,9 +421,10 @@ body {
   box-shadow: var(--shadow-hover);
   cursor: pointer; font-family: inherit;
   transform: translate(-50%, -50%);
-  animation: burst-out .5s cubic-bezier(.2, .9, .3, 1.25) both;
+  animation: burst-out .52s cubic-bezier(.2, .9, .3, 1.3) both;
   animation-delay: var(--delay, 0ms);
   text-decoration: none;
+  z-index: 2;
 }
 .burst-bubble .bb-ico { font-size: 26px; line-height: 1; }
 .burst-bubble .bb-name { font-size: 10.5px; font-weight: 600; text-align: center; padding: 0 6px; line-height: 1.25; }
@@ -361,6 +434,10 @@ body {
 @keyframes burst-out {
   from { transform: translate(-50%, -50%) scale(.2); opacity: 0; }
   to   { transform: translate(calc(-50% + var(--dx, 0px)), calc(-50% + var(--dy, 0px))) scale(1); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .burst-beam, .burst-core, .burst-core::after, .burst-ray, .burst-bubble { animation-duration: .01ms; }
 }
 
 /* ---------- 轻提示 ---------- */

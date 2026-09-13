@@ -445,6 +445,33 @@
 [data-theme="dopamine"] .hub .drawer-nav a:hover,
 [data-theme="dopamine"] .hub .drawer-nav button:hover { background: rgba(13, 13, 26, .5); color: var(--a2); }
 
+/* 光束扇形炸开 */
+[data-theme="dopamine"] .hub .burst-layer { background: rgba(13, 13, 26, .62); backdrop-filter: blur(2px); }
+[data-theme="dopamine"] .hub .burst-beam {
+  opacity: .62;
+  mix-blend-mode: screen;
+  filter: blur(3px) saturate(1.25);
+}
+[data-theme="dopamine"] .hub .burst-core {
+  width: 26px; height: 26px;
+  filter: drop-shadow(0 0 10px var(--cat-c, var(--a1)));
+}
+[data-theme="dopamine"] .hub .burst-core::after { border-width: 3px; }
+[data-theme="dopamine"] .hub .burst-ray {
+  height: 3px; opacity: .85;
+  filter: drop-shadow(0 0 6px var(--cat-c, var(--a1)));
+}
+
+/* 光源分类磁贴：点击后脉冲发光 */
+[data-theme="dopamine"] .hub .cat-tile.is-active { color: var(--cat-c, var(--a1)); }
+[data-theme="dopamine"] .hub .cat-tile.is-active .cat-ico {
+  animation: emit-pulse 1.15s ease-in-out infinite;
+}
+@keyframes emit-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--cat-c, var(--a1)); transform: scale(1); }
+  50%      { box-shadow: 0 0 0 9px transparent; transform: scale(1.06); }
+}
+
 /* 炸开气泡 */
 [data-theme="dopamine"] .hub .burst-bubble {
   border: 4px solid var(--a3);
