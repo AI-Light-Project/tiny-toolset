@@ -60,6 +60,7 @@
     logX: true,
     logY: false,
     showLine: true,
+    showLabels: false,
     selected: null,
     view: null,
     size: { w: 800, h: 480 },
@@ -78,7 +79,7 @@
     empty: $('#chartEmpty'), emptyText: $('#chartEmptyText'),
     srcBadge: $('#srcBadge'), srcText: $('#srcText'), refresh: $('#btnRefresh'),
     xMetric: $('#xMetric'), yMetric: $('#yMetric'), logX: $('#logX'), logY: $('#logY'),
-    showLine: $('#showLine'), legend: $('#chartLegend'),
+    showLine: $('#showLine'), showLabels: $('#showLabels'), legend: $('#chartLegend'),
     resetView: $('#btnResetView'), axisNote: $('#axisNote'),
     search: $('#searchModel'), creatorList: $('#creatorList'), filterHint: $('#filterHint'),
     selAll: $('#btnSelAll'), selNone: $('#btnSelNone'), selMain: $('#btnSelMain'),
@@ -569,8 +570,20 @@
       });
     }
 
+    // --- 性价比前沿（Pareto frontier）：没有任何模型能同时比它更便宜且更强的点 ---
+    var frontier = paretoFrontier(visible);
+    if (frontier.length > 1) {
+      parts.push('<path class="frontier" d="' + frontier.map(function (m, i) {
+        return (i ? 'L' : 'M') + px(xVal(m)).toFixed(1) + ' ' + py(yVal(m)).toFixed(1);
+      }).join(' ') + '" fill="none"/>');
+      frontier.forEach(function (m) {
+        parts.push('<circle class="frontier-dot" cx="' + px(xVal(m)).toFixed(1) + '" cy="' + py(yVal(m)).toFixed(1) + '" r="2.4"/>');
+      });
+    }
+
     // --- 点 ---
-    var showAllLabels = visible.length <= 26;
+    var frontierSet = {};
+    frontier.forEach(function (m) { frontierSet[m.id] = true; });
     var winSet = {};
     if (sel && selX != null) {
       visible.forEach(function (m) {
@@ -594,7 +607,11 @@
         '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + r + '" fill="' + esc(colorOf(m.c)) + '"/>' +
         (isSel ? '<circle class="pt-sel-ring" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (r + 5) + '"/>' : '') +
         '</g>');
-      if (isSel || isWin || showAllLabels) labels.push({ m: m, x: x, y: y, isSel: isSel, isWin: isWin });
+      // 默认只给「前沿点 / 选中点 / 斩杀点」标名字，图才看得清；
+      // 勾选「标注全部模型名」后所有点都标。
+      if (isSel || isWin || frontierSet[m.id] || state.showLabels) {
+        labels.push({ m: m, x: x, y: y, isSel: isSel, isWin: isWin, key: frontierSet[m.id] });
+      }
     });
 
     // --- 斩杀十字线 ---
@@ -611,13 +628,25 @@
       parts.push('<text class="quad-label" fill="var(--text-muted)" x="' + (b.l + 10) + '" y="' + (b.t + b.h - 9) + '">更便宜 · 更弱</text>');
     }
 
-    // --- 标签（最后画，压在最上层；靠近右/上边缘时自动翻转方向，避免出界） ---
+    // 前沿点偶尔会挤在一起（低价区尤其密），做一次只跟"前一个"比的轻量避让：
+    // 既能把压在一起的标签错开，又不会连成一串文字柱。
+    var fronts = labels.filter(function (L) { return L.key && !L.isSel && !L.isWin; })
+      .sort(function (a, b2) { return a.x - b2.x; });
+    for (var fi = 1; fi < fronts.length; fi++) {
+      var pv = fronts[fi - 1], cu = fronts[fi];
+      var pvy = pv.ly == null ? pv.y : pv.ly;
+      if (Math.abs(cu.x - pv.x) < 120 && Math.abs(cu.y - pvy) < 11.5) {
+        cu.ly = Math.min(Math.max(cu.y, pvy + 11.5), cu.y + 23);
+      }
+    }
+
+    // --- 标签（最后画，压在最上层；靠近右边缘的点标签自动改到左侧） ---
     labels.forEach(function (L) {
-      var toRight = L.x < b.l + b.w * 0.7;
-      var below = L.y < b.t + 26;
-      parts.push('<text class="pt-label' + (L.isWin ? ' win' : '') + '"' +
+      var toRight = L.x < b.l + b.w * 0.66;
+      var cls = 'pt-label' + (L.isSel ? ' key' : (L.isWin ? ' win' : (L.key ? ' front' : '')));
+      parts.push('<text class="' + cls + '" data-id="' + esc(L.m.id) + '"' +
         ' x="' + (L.x + (toRight ? 8 : -8)).toFixed(1) + '"' +
-        ' y="' + (L.y + (below ? 15 : -8)).toFixed(1) + '"' +
+        ' y="' + ((L.ly == null ? L.y : L.ly) + 3.6).toFixed(1) + '"' +
         ' text-anchor="' + (toRight ? 'start' : 'end') + '">' + esc(L.m.n) + '</text>');
     });
 
@@ -637,6 +666,18 @@
       return '<span class="lg-item"><i style="--c:' + esc(colorOf(c)) + '"></i>' + esc(c) +
         '<b>' + used[c] + '</b></span>';
     }).join('');
+  }
+
+  // 性价比前沿：按成本升序扫一遍，只要表现刷新了历史最好值，就落在前沿上。
+  // 等价于「没有人能斩杀它」的那批模型。
+  function paretoFrontier(list) {
+    var pts = list.slice().sort(function (a, b) { return xVal(a) - xVal(b); });
+    var out = [], best = -Infinity;
+    pts.forEach(function (m) {
+      var y = yVal(m);
+      if (y > best) { out.push(m); best = y; }
+    });
+    return out;
   }
 
   function colorOf(creator) {
@@ -724,7 +765,20 @@
   }
 
   // ============ 交互：缩放 / 平移 / 悬停 ============
-  var pointers = {}, lastDist = 0, dragStart = null, moved = false;
+  var pointers = {}, lastDist = 0, dragStart = null, moved = false, downTarget = null;
+
+  // 从事件目标反查被点中的模型（数据点、点上的文字都能命中）
+  function hitModelId(e) {
+    var t = e.target;
+    while (t && t !== el.svg) {
+      if (t.getAttribute) {
+        var id = t.getAttribute('data-id');
+        if (id && byId[id]) return id;
+      }
+      t = t.parentNode;
+    }
+    return null;
+  }
 
   function localPos(e) {
     var r = el.svg.getBoundingClientRect();
@@ -759,6 +813,9 @@
       dragStart = localPos(e);
       moved = false;
       state.dragging = true;
+      // 必须在 setPointerCapture 之前取命中目标：捕获之后 pointerup 的 target 会变成 svg 本身，
+      // 那时再 closest('.pt') 就找不到点了（曾经的点击无响应就是这个原因）。
+      downTarget = hitModelId(e);
       el.svg.setPointerCapture && el.svg.setPointerCapture(e.pointerId);
     } else if (Object.keys(pointers).length === 2) {
       var ks = Object.keys(pointers);
@@ -812,13 +869,14 @@
   }
   el.svg.addEventListener('pointerup', function (e) {
     var wasDrag = moved;
+    var id = downTarget;
     endPointer(e);
+    downTarget = null;
     if (wasDrag) { moved = false; return; }
-    var g = e.target && e.target.closest ? e.target.closest('.pt') : null;
-    if (g) selectModel(g.getAttribute('data-id'));
+    if (id) selectModel(id);
     else if (state.selected) { state.selected = null; render(); }
   });
-  el.svg.addEventListener('pointercancel', endPointer);
+  el.svg.addEventListener('pointercancel', function (e) { downTarget = null; endPointer(e); });
   el.svg.addEventListener('pointerleave', function () { hideTooltip(); });
 
   el.killBody.addEventListener('click', function (e) {
@@ -829,9 +887,9 @@
   function hideTooltip() { el.tooltip.hidden = true; }
 
   function hoverAt(e) {
-    var g = e.target && e.target.closest ? e.target.closest('.pt') : null;
-    if (!g) { hideTooltip(); return; }
-    var m = byId[g.getAttribute('data-id')];
+    var id = hitModelId(e);
+    if (!id) { hideTooltip(); return; }
+    var m = byId[id];
     if (!m) { hideTooltip(); return; }
     showTooltip(m, e);
   }
@@ -884,7 +942,7 @@
     try {
       localStorage.setItem(PREF_KEY, JSON.stringify({
         xMetric: state.xMetric, yMetric: state.yMetric,
-        logX: state.logX, logY: state.logY, showLine: state.showLine,
+        logX: state.logX, logY: state.logY, showLine: state.showLine, showLabels: state.showLabels,
         sel: Object.keys(state.selCreators).filter(function (k) { return state.selCreators[k]; })
       }));
     } catch (e) { /* 忽略 */ }
@@ -926,6 +984,7 @@
     el.logX.addEventListener('change', function () { state.logX = el.logX.checked; fitView(); render(); savePrefs(); });
     el.logY.addEventListener('change', function () { state.logY = el.logY.checked; fitView(); render(); savePrefs(); });
     el.showLine.addEventListener('change', function () { state.showLine = el.showLine.checked; render(); savePrefs(); });
+    el.showLabels.addEventListener('change', function () { state.showLabels = el.showLabels.checked; render(); savePrefs(); });
     el.resetView.addEventListener('click', function () { fitView(); render(); });
 
     el.search.addEventListener('input', function () {
@@ -989,12 +1048,14 @@
       state.logX = prefs.logX !== false;
       state.logY = !!prefs.logY;
       state.showLine = prefs.showLine !== false;
+      state.showLabels = prefs.showLabels === true;   // 默认关：只标前沿点，图才清爽
     }
     el.xMetric.value = state.xMetric;
     el.yMetric.value = state.yMetric;
     el.logX.checked = state.logX;
     el.logY.checked = state.logY;
     el.showLine.checked = state.showLine;
+    el.showLabels.checked = state.showLabels;
 
     var snap = loadSnapshot();
     if (!snap) {
@@ -1040,6 +1101,7 @@
     visibleModels: visibleModels,
     xVal: xVal, yVal: yVal,
     render: render, fitView: fitView, selectModel: selectModel,
+    paretoFrontier: paretoFrontier,
     getVisible: function () { return visible; }
   };
 })();

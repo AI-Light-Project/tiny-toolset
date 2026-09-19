@@ -213,11 +213,22 @@ body.kill {
 #chart .pt-halo { fill: none; stroke: var(--text); stroke-width: 1.4; opacity: .55; }
 #chart .pt-sel-ring { fill: none; stroke: var(--text); stroke-width: 2; }
 #chart .pt-label {
-  font-size: 10.5px; font-weight: 600; font-family: var(--font-body);
-  fill: var(--text); pointer-events: none;
+  font-size: 10.5px; font-weight: 500; font-family: var(--font-body);
+  fill: var(--text-sub);
+  cursor: pointer;
   paint-order: stroke; stroke: var(--panel); stroke-width: 3px; stroke-linejoin: round;
 }
-#chart .pt-label.win { fill: var(--win); }
+#chart .pt-label:hover { fill: var(--text); }
+#chart .pt-label.key { fill: var(--text); font-weight: 700; font-size: 11.5px; }
+#chart .pt-label.win { fill: var(--win); font-weight: 700; }
+#chart .pt-label.front { fill: var(--text); font-weight: 600; }
+
+/* 性价比前沿：没有人能同时更便宜且更强的那条线 */
+#chart .frontier {
+  stroke: var(--text-sub); stroke-width: 1.6;
+  stroke-dasharray: 3 3.5; stroke-opacity: .55; stroke-linecap: round;
+}
+#chart .frontier-dot { fill: var(--text-sub); fill-opacity: .7; }
 
 /* 图例：颜色 = 厂商，仅列出当前可见的厂商 */
 .chart-legend {
