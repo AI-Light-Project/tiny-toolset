@@ -2,7 +2,8 @@
    theme.js —— 主题切换器 + 主题 API
    职责：读取/持久化主题（localStorage）→ 设置 <html data-theme>
         → 暴露 window.THEME 供页面（如首页设置面板）调用
-        → 首页自带设置面板时不再注入悬浮按钮；工具页自动注入悬浮按钮
+        → 注入主题切换按钮：仅当页面既没有设置面板、也没有 .topbar 时才注入
+          （首页用设置面板；工具页有顶栏，主题在首页设置好后跟随即可）
         → 多巴胺主题下注入漂浮装饰层
    约定：普通 <script> 引入（非 ESM，file:// 兼容）；
         页面 <head> 里先放一段内联脚本设置初始 data-theme 防闪烁。
@@ -104,6 +105,9 @@
   function injectToggle() {
     // 首页自带设置面板 → 不注入悬浮按钮（主题切换收进设置里）
     if (document.getElementById('settings-panel')) return;
+    // 工具页统一不注入：顶栏（.topbar）本身就是页面头部，悬浮按钮会压在它右侧的按钮上；
+    // 主题在首页设置面板里选好即可，工具页通过 localStorage 跟随。
+    if (document.querySelector('.topbar')) return;
     if (document.querySelector('.theme-toggle')) return;
     var b = document.createElement('button');
     b.type = 'button';

@@ -234,7 +234,8 @@
 [data-theme="dopamine"] .btn-primary:hover { color: #fff; border-color: var(--a3); }
 [data-theme="dopamine"] .btn:active { transform: scale(.96); }
 
-/* ---------- 主题切换按钮（theme.js 注入） ---------- */
+/* ---------- 主题切换按钮（theme.js 注入）
+   仅在「既无设置面板、也无 .topbar」的页面出现（首页用设置面板，工具页跟随首页设置） ---------- */
 .theme-toggle {
   position: fixed;
   top: 14px; right: 14px;

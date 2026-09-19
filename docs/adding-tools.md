@@ -64,7 +64,8 @@ tools-hub/
 2. **不用 ES module**：`<script src="app.js"></script>` 普通引入即可（`type="module"` 在 `file://` 下会被 CORS 拦截）。
 3. **数据不出本机**：所有计算在浏览器完成。
 4. **令牌集中**：颜色/字体/圆角/阴影变量统一来自 `assets/css/theme.css`（模板已自动引入）。
-   `style.css` 里**禁止**定义 `:root` 颜色变量——否则会覆盖全局主题，右上角的主题切换会失效。
+   `style.css` 里**禁止**定义 `:root` 颜色变量——否则会覆盖全局主题，切主题时样式不跟着变。
+   （主题入口统一在首页「齿轮 → 页面设置」；工具页有 `.topbar` 时 `theme.js` 不再注入悬浮切换按钮）
    需要的变量：`--bg` `--panel` `--line` `--line-strong` `--text` `--text-sub` `--text-muted`
    `--primary` `--danger` `--a1`~`--a5` `--radius` `--radius-card` `--border-w` `--shadow`
    `--font-body` `--font-head` `--font-mono`。
