@@ -91,6 +91,13 @@ Terminal-Bench Hard、SciCode、IFBench、CritPt、MMMU-Pro、GDPval、AA-Omnisc
 }
 ```
 
-想更新数据，抓取 `https://artificialanalysis.ai/zh/leaderboards/models` 的 HTML，
-按上面的解析步骤取出 `models` 数组，筛掉 `deprecated` 与无 `intelligenceIndex` 的条目，
-把 `0-1 的小数 × 100` 转成百分比分后写入 `data.js` 即可（也可直接点页面右上角「刷新数据」在线取最新值）。
+重新生成（需要 Node 18+ 与外网）：
+
+```bash
+node tools/llm-kill-line/build-snapshot.js            # 覆盖写入 data.js
+node tools/llm-kill-line/build-snapshot.js --out x.js # 写到别处先看 diff
+```
+
+脚本会抓取榜单页、按上面的规则解析 RSC 载荷、筛掉 `deprecated` 与无 `intelligenceIndex` 的条目、
+把 `0-1 的小数 × 100` 转成百分比分，并顺手重建厂商配色表。
+临时查看最新数据也可以直接点页面右上角「刷新数据」（不走快照，只在当前会话生效）。

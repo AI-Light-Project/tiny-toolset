@@ -66,6 +66,7 @@ tiny-toolset/                # 即本仓库根目录（克隆后所在目录）
 │       ├── style.css
 │       ├── app.js
 │       ├── data.js             #   内置数据快照（离线可用）
+│       ├── build-snapshot.js   #   重新抓取并生成 data.js（Node 脚本，非站点资源）
 │       └── README.md
 └── docs/
     └── adding-tools.md         # 添加新工具完整指南
