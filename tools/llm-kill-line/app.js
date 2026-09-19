@@ -80,7 +80,7 @@
     srcBadge: $('#srcBadge'), srcText: $('#srcText'), refresh: $('#btnRefresh'),
     xMetric: $('#xMetric'), yMetric: $('#yMetric'), logX: $('#logX'), logY: $('#logY'),
     showLine: $('#showLine'), showLabels: $('#showLabels'), legend: $('#chartLegend'),
-    resetView: $('#btnResetView'), axisNote: $('#axisNote'),
+    resetView: $('#btnResetView'), exportChart: $('#btnExportChart'), axisNote: $('#axisNote'),
     search: $('#searchModel'), creatorList: $('#creatorList'), filterHint: $('#filterHint'),
     selAll: $('#btnSelAll'), selNone: $('#btnSelNone'), selMain: $('#btnSelMain'),
     panelBody: $('#filterBody'), filterToggle: $('#btnFilterToggle'),
@@ -654,6 +654,278 @@
     el.svg.innerHTML = parts.join('');
   }
 
+  // ============================================================
+  // 导出当前图表为 PNG
+  // 做法：克隆屏幕上那个 SVG，把 getComputedStyle 的结果内联进去
+  //      （脱离样式表也能渲染），连同标题 / 图例 / 页脚拼成一张大 SVG，
+  //      再光栅化到 2 倍分辨率的 canvas。
+  // 因此导出结果必然与当前视图一致：缩放平移后的坐标范围、筛选后的点、
+  // 标签、象限高亮、主题色全部来自"屏幕上真实渲染的节点"。
+  // 全程只读，不修改 state 与页面 DOM（下载用的 <a> 用完即移除）。
+  // ============================================================
+  var EXPORT_PAD = 20;
+
+  // 导出分辨率：至少是画布的 2 倍，高分屏上再往上取
+  function exportScale() { return Math.max(2, Math.ceil(window.devicePixelRatio || 1)); }
+
+  var INLINE_PROPS = [
+    'fill', 'fill-opacity', 'fill-rule', 'stroke', 'stroke-width', 'stroke-opacity',
+    'stroke-dasharray', 'stroke-dashoffset', 'stroke-linecap', 'stroke-linejoin',
+    'opacity', 'font-size', 'font-family', 'font-weight', 'font-style', 'letter-spacing',
+    'text-anchor', 'dominant-baseline', 'paint-order'
+  ];
+
+  // 粗略估算文本宽度：全角按 1em、半角按 0.55em，用于图例换行排版
+  function textW(s, size) {
+    var w = 0;
+    for (var i = 0; i < s.length; i++) w += (s.charCodeAt(i) > 255 ? 1 : 0.55) * size;
+    return w;
+  }
+  function xmlEsc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' }[c];
+    });
+  }
+  // 按可用宽度折行（中文逐字断，英文尽量在空格处断），窄屏导出时标题/页脚不会溢出画布
+  function wrapText(s, size, maxW) {
+    var lines = [], cur = '';
+    for (var i = 0; i < s.length; i++) {
+      var ch = s.charAt(i);
+      if (ch === '\n') { lines.push(cur); cur = ''; continue; }
+      if (cur && textW(cur + ch, size) > maxW) {
+        var sp = cur.lastIndexOf(' ');
+        if (sp > cur.length * 0.5) {           // 优先在靠后的空格处断开
+          lines.push(cur.slice(0, sp));
+          cur = cur.slice(sp + 1) + ch;
+        } else {
+          lines.push(cur);
+          cur = ch;
+        }
+      } else {
+        cur += ch;
+      }
+    }
+    if (cur) lines.push(cur);
+    return lines.length ? lines : [''];
+  }
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+  function fmtDateTime(d) {
+    if (!d) return '';
+    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) +
+      ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+  }
+
+  // 克隆图表 SVG 并把计算样式内联，返回可直接嵌进导出 SVG 的内容
+  function captureChartSvg() {
+    var src = el.svg;
+    var clone = src.cloneNode(true);
+    var from = [src].concat(Array.prototype.slice.call(src.querySelectorAll('*')));
+    var to = [clone].concat(Array.prototype.slice.call(clone.querySelectorAll('*')));
+    for (var i = 0; i < from.length; i++) {
+      var cs = window.getComputedStyle(from[i]);
+      var css = '';
+      for (var j = 0; j < INLINE_PROPS.length; j++) {
+        var p = INLINE_PROPS[j];
+        var v = cs.getPropertyValue(p);
+        // 注意要保留 'none'（fill:none / stroke:none 是有效值），只丢弃 auto/normal
+        if (v && v !== 'auto' && v !== 'normal') css += p + ':' + v + ';';
+      }
+      to[i].setAttribute('style', css);
+      to[i].removeAttribute('class');
+      to[i].removeAttribute('data-id');
+    }
+    return clone.innerHTML;
+  }
+
+  function buildExportSvg() {
+    var W = state.size.w + EXPORT_PAD * 2;
+    var chartH = state.size.h;
+    var root = window.getComputedStyle(document.documentElement);
+    var cv = function (n, fb) { var v = root.getPropertyValue(n).trim(); return v || fb; };
+
+    var bg = cv('--panel', '#ffffff');
+    var cText = cv('--text', '#1f2329');
+    var cMuted = cv('--text-muted', '#8f959e');
+    var cLine = cv('--line', '#e6e8eb');
+    var fontFam = window.getComputedStyle(document.body).fontFamily || 'sans-serif';
+
+    var xm = xMeta(), ym = yMeta();
+    var sel = state.selected ? byId[state.selected] : null;
+    var selX = sel ? xVal(sel) : null;
+    var selY = sel ? yVal(sel) : null;
+    var killers = [];
+    if (sel && selX != null) {
+      visible.forEach(function (m) {
+        if (m.id !== sel.id && xVal(m) < selX && yVal(m) > selY) killers.push(m);
+      });
+    }
+
+    // ---- 标题 / 副标题 ----
+    var title = xm.short + ' × ' + ym.short + (sel ? ' · 斩杀线' : ' · 成本性能云图');
+    var srcTxt = state.data.live
+      ? '实时抓取自 Artificial Analysis（' + fmtDateTime(state.data.fetchedAt) + '）'
+      : '内置快照 · 数据日期 ' + (state.data.generated || '未知') + ' · 来源 Artificial Analysis';
+    var sub = sel
+      ? '斩杀对象：' + sel.n + '（' + fmtMoney(selX) + ' · ' + fmtScore(selY, ym.unit) + '）' +
+        ' · 能斩杀它的模型 ' + killers.length + ' 个 · 图上共 ' + visible.length + ' 个模型'
+      : 'X 轴 ' + xm.short + '（' + xm.unit + '，' + (state.logX ? '对数' : '线性') + '）' +
+        ' · Y 轴 ' + ym.label + '（' + ym.unit + '）' +
+        ' · 图上共 ' + visible.length + ' / ' + state.data.models.length + ' 个模型';
+
+    var tSize = 16, sSize = 11.5, lSize = 11.5, fSize = 10.5;
+    var contentW = W - EXPORT_PAD * 2;
+    while (tSize > 12 && textW(title, tSize) > contentW) tSize -= 0.5;   // 标题过长就收字号
+
+    var titleY = EXPORT_PAD + tSize;
+    var subLines = wrapText(sub, sSize, contentW);
+    var subLineH = 14.5;
+    var subY = titleY + 17;
+
+    // ---- 图例（与屏幕上 renderLegend 同一份统计数据） ----
+    var used = {}, order = [];
+    visible.forEach(function (m) { if (!used[m.c]) { used[m.c] = 0; order.push(m.c); } used[m.c]++; });
+    order.sort(function (a, b) { return used[b] - used[a]; });
+
+    var lTop = subY + (subLines.length - 1) * subLineH + 14;
+    var lx = 0, line = 0, lpos = [];
+    order.forEach(function (c) {
+      var w = 9 + 5 + textW(c, lSize) + 5 + textW(String(used[c]), lSize * 0.9) + 14;
+      if (lx && lx + w > W) { lx = 0; line++; }
+      lpos.push({ x: lx, line: line });
+      lx += w;
+    });
+    var legendRows = order.length ? line + 1 : 0;
+    var legendBottom = lTop + legendRows * 17 + 6;
+
+    var chartTop = legendRows ? legendBottom + 4 : lTop;
+
+    var foot = '导出时间 ' + fmtDateTime(new Date()) + ' · ' + srcTxt +
+      ' · 坐标口径：X=' + xm.short + '，Y=' + ym.label;
+    var footLines = wrapText(foot, fSize, contentW);
+    var footLineH = 13;
+    var footTop = chartTop + chartH + 10;
+    var totalH = Math.round(footTop + footLines.length * footLineH + EXPORT_PAD);
+
+    var sc = exportScale();
+    var parts = [];
+    parts.push('<?xml version="1.0" encoding="UTF-8"?>');
+    parts.push('<svg xmlns="http://www.w3.org/2000/svg" width="' + Math.round(W * sc) +
+      '" height="' + Math.round(totalH * sc) + '" viewBox="0 0 ' + W + ' ' + totalH + '">');
+    parts.push('<rect x="0" y="0" width="' + W + '" height="' + totalH + '" fill="' + xmlEsc(bg) + '"/>');
+
+    parts.push('<text x="' + EXPORT_PAD + '" y="' + titleY + '" font-family="' + xmlEsc(fontFam) +
+      '" font-size="' + tSize + '" font-weight="700" fill="' + xmlEsc(cText) + '">' + xmlEsc(title) + '</text>');
+    subLines.forEach(function (ln, i) {
+      parts.push('<text x="' + EXPORT_PAD + '" y="' + (subY + i * subLineH) + '" font-family="' + xmlEsc(fontFam) +
+        '" font-size="' + sSize + '" fill="' + xmlEsc(cMuted) + '">' + xmlEsc(ln) + '</text>');
+    });
+
+    order.forEach(function (c, i) {
+      var cy = lTop + lpos[i].line * 17 + 5;
+      var bx = EXPORT_PAD + lpos[i].x;
+      parts.push('<rect x="' + bx + '" y="' + (cy - 4.5) + '" width="9" height="9" rx="2" fill="' + xmlEsc(colorOf(c)) + '"/>');
+      parts.push('<text x="' + (bx + 14) + '" y="' + cy + '" font-family="' + xmlEsc(fontFam) +
+        '" font-size="' + lSize + '" fill="' + xmlEsc(cMuted) + '" dominant-baseline="central">' +
+        xmlEsc(c) + ' <tspan fill="' + xmlEsc(cText) + '" font-weight="600">' + used[c] + '</tspan></text>');
+    });
+
+    if (legendRows) {
+      parts.push('<line x1="' + EXPORT_PAD + '" y1="' + legendBottom + '" x2="' + (W - EXPORT_PAD) +
+        '" y2="' + legendBottom + '" stroke="' + xmlEsc(cLine) + '" stroke-width="1"/>');
+    }
+
+    parts.push('<g transform="translate(' + EXPORT_PAD + ',' + chartTop + ')">' + captureChartSvg() + '</g>');
+
+    footLines.forEach(function (ln, i) {
+      parts.push('<text x="' + EXPORT_PAD + '" y="' + (footTop + fSize + i * footLineH) + '" font-family="' + xmlEsc(fontFam) +
+        '" font-size="' + fSize + '" fill="' + xmlEsc(cMuted) + '">' + xmlEsc(ln) + '</text>');
+    });
+
+    parts.push('</svg>');
+    return { svg: parts.join(''), width: W, height: totalH };
+  }
+
+  function downloadBlob(blob, filename) {
+    var u = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = u;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(u); }, 1500);
+  }
+
+  var exporting = false;
+  function exportChart() {
+    if (exporting) return;
+    if (!state.data || !visible.length) {
+      toast('图上没有数据点，先调整筛选条件或坐标轴再导出');
+      return;
+    }
+    if (!el.svg.firstChild || !state.view) {
+      toast('图表尚未绘制完成，稍后再试');
+      return;
+    }
+
+    var btn = el.exportChart;
+    exporting = true;
+    if (btn) { btn.disabled = true; btn.textContent = '导出中…'; }
+
+    var done = function (msg, isErr) {
+      exporting = false;
+      if (btn) { btn.disabled = false; btn.textContent = '导出 PNG'; }
+      if (msg) toast(msg);
+    };
+
+    var built, url = '';
+    try {
+      built = buildExportSvg();
+      var blob = new Blob([built.svg], { type: 'image/svg+xml;charset=utf-8' });
+      url = URL.createObjectURL(blob);
+    } catch (e) {
+      done('导出失败：图表序列化出错（' + (e && e.message ? e.message : '未知错误') + '）');
+      return;
+    }
+
+    var scale = exportScale();
+    var cw = Math.round(built.width * scale);
+    var chh = Math.round(built.height * scale);
+
+    var img = new Image();
+    img.onload = function () {
+      try {
+        var cv2 = document.createElement('canvas');
+        cv2.width = cw;
+        cv2.height = chh;
+        var ctx = cv2.getContext('2d');
+        if (!ctx) throw new Error('无法创建画布上下文');
+        // 背景为不透明纯色，避免透明底在聊天工具里发黑
+        ctx.fillStyle = window.getComputedStyle(document.documentElement).getPropertyValue('--panel').trim() || '#ffffff';
+        ctx.fillRect(0, 0, cw, chh);
+        ctx.drawImage(img, 0, 0, cw, chh);
+        cv2.toBlob(function (b) {
+          URL.revokeObjectURL(url);
+          if (!b) { done('导出失败：浏览器未能生成 PNG 数据'); return; }
+          var t = new Date();
+          var stamp = '' + t.getFullYear() + pad2(t.getMonth() + 1) + pad2(t.getDate()) +
+            '-' + pad2(t.getHours()) + pad2(t.getMinutes());
+          var kind = state.selected ? '斩杀线图' : '成本性能云图';
+          downloadBlob(b, 'LLM' + kind + '-' + xMeta().short + 'x' + yMeta().short + '-' + stamp + '.png');
+          done('已导出 PNG · ' + cw + '×' + chh + 'px');
+        }, 'image/png');
+      } catch (e) {
+        URL.revokeObjectURL(url);
+        done('导出失败：图片光栅化出错（' + (e && e.message ? e.message : '未知错误') + '）');
+      }
+    };
+    img.onerror = function () {
+      URL.revokeObjectURL(url);
+      done('导出失败：图表转换为图片时出错');
+    };
+    img.src = url;
+  }
+
   // 图例：只列当前可见的厂商，颜色与散点一致
   function renderLegend() {
     if (!el.legend) return;
@@ -1018,6 +1290,7 @@
 
     el.clearSel.addEventListener('click', function () { state.selected = null; render(); });
     el.refresh.addEventListener('click', function () { fetchLive(false); });
+    el.exportChart.addEventListener('click', exportChart);
 
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && state.selected) { state.selected = null; render(); }
@@ -1102,6 +1375,8 @@
     xVal: xVal, yVal: yVal,
     render: render, fitView: fitView, selectModel: selectModel,
     paretoFrontier: paretoFrontier,
+    exportChart: exportChart,
+    buildExportSvg: buildExportSvg,
     getVisible: function () { return visible; }
   };
 })();
