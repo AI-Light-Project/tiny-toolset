@@ -234,26 +234,11 @@
 [data-theme="dopamine"] .btn-primary:hover { color: #fff; border-color: var(--a3); }
 [data-theme="dopamine"] .btn:active { transform: scale(.96); }
 
-/* ---------- 漂浮装饰层（theme.js 注入） ---------- */
-.fx-layer { position: fixed; inset: 0; z-index: 60; pointer-events: none; }
-.fx-layer img {
-  position: absolute;
-  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, .45));
-}
-[data-theme="clean"] .fx-layer { display: none; }
-
-.fx-a { animation: fx-float 6s ease-in-out infinite; }
-.fx-b { animation: fx-float 5.2s ease-in-out infinite reverse; }
-.fx-c { animation: fx-wiggle 1.6s ease-in-out infinite; }
-.fx-d { animation: fx-bounce 2.6s ease-in-out infinite; }
-
+/* 漂浮装饰层（.fx-layer / .fx-a~d）已移除 —— 左下角的彩虹插画容易被误认成按钮，
+   且会压住卡片内容。下面两个 keyframes 仍被品牌插画等元素复用，保留。 */
 @keyframes fx-float {
   0%, 100% { transform: translateY(0) rotate(0deg); }
   50%      { transform: translateY(-18px) rotate(6deg); }
-}
-@keyframes fx-wiggle {
-  0%, 100% { transform: rotate(-7deg); }
-  50%      { transform: rotate(7deg); }
 }
 @keyframes fx-bounce {
   0%, 100% { transform: translateY(0); }
@@ -297,11 +282,9 @@
     background: rgba(13, 13, 26, .94);
   }
 
-  .fx-layer img:nth-child(n+5) { display: none; }
 }
 
 @media (max-width: 640px) {
-  .fx-layer img:nth-child(n+3) { display: none; }
   [data-theme="dopamine"] .card,
   [data-theme="dopamine"] .grid .card:nth-child(5n+2),
   [data-theme="dopamine"] .grid .card:nth-child(5n+3),

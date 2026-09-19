@@ -2,10 +2,8 @@
    theme.js —— 主题切换器 + 主题 API
    职责：读取/持久化主题（localStorage）→ 设置 <html data-theme>
         → 暴露 window.THEME 供页面调用（全站唯一的主题入口是首页「齿轮 → 页面设置」）
-        → 多巴胺主题下给**首页**注入漂浮装饰层（工具页不注入）
-   说明：本脚本**不再注入任何悬浮切换按钮**。工具页只负责跟随首页选好的主题，
-        避免固定定位的按钮压住工具页顶栏右侧的操作区；
-        漂浮插画同样只在首页出现，否则会压住工具页卡片里的内容。
+   说明：本脚本**不往页面里注入任何东西**——不放悬浮切换按钮，也不放漂浮装饰插画。
+        主题只由 <html data-theme> 驱动，工具页跟随首页选好的主题。
    约定：普通 <script> 引入（非 ESM，file:// 兼容）；
         页面 <head> 里先放一段内联脚本设置初始 data-theme 防闪烁。
    ============================================================ */
@@ -17,12 +15,6 @@
     { id: 'clean', label: '清爽' },
     { id: 'dopamine', label: '多巴胺' }
   ];
-
-  // 通过本脚本自身的 src 推导 assets/ 根路径，任意层级的页面都能正确引用图片
-  var base = (function () {
-    var s = (document.currentScript && document.currentScript.src) || '';
-    return s.replace(/js\/theme\.js.*$/, '');
-  })();
 
   function stored() {
     try { return localStorage.getItem(KEY); } catch (e) { return null; }
@@ -47,53 +39,11 @@
     return id;
   }
 
-  /* 漂浮装饰（仅多巴胺主题注入；样式见 theme-maximal.css 的 .fx-layer） */
-  var FX = [
-    { img: 'sparkles.png', style: 'top:8%;left:3%;width:62px;', cls: 'fx-a' },
-    { img: 'star.png',     style: 'top:15%;right:5%;width:42px;', cls: 'fx-b' },
-    { img: 'rainbow.png',  style: 'bottom:13%;left:2.5%;width:78px;', cls: 'fx-a' },
-    { img: 'rocket.png',   style: 'top:52%;right:2.5%;width:54px;', cls: 'fx-b' },
-    { img: 'fire.png',     style: 'bottom:6%;right:9%;width:46px;', cls: 'fx-c' },
-    { img: 'boom.png',     style: 'top:40%;left:2%;width:38px;', cls: 'fx-c' },
-    { img: 'crayon.png',   style: 'bottom:22%;left:5%;width:40px;', cls: 'fx-d' },
-    { img: 'star.png',     style: 'bottom:31%;right:7%;width:26px;', cls: 'fx-d' }
-  ];
-
-  function injectFx() {
-    if (document.getElementById('fx-layer')) return;
-    var layer = document.createElement('div');
-    layer.id = 'fx-layer';
-    layer.className = 'fx-layer';
-    layer.setAttribute('aria-hidden', 'true');
-    FX.forEach(function (f) {
-      var img = document.createElement('img');
-      img.src = base + 'img/' + f.img;
-      img.alt = '';
-      img.className = f.cls;
-      img.style.cssText = f.style;
-      layer.appendChild(img);
-    });
-    document.body.appendChild(layer);
-  }
-
-  function removeFx() {
-    var fx = document.getElementById('fx-layer');
-    if (fx) fx.remove();
-  }
-
-  // 漂浮插画只给首页（<body class="hub">）用：工具页是功能页，装饰图会压住卡片里的内容，
-  // 而且左下角那张彩虹很容易被误认成「切换主题」的按钮。
-  function isHub() {
-    return !!(document.body && document.body.classList.contains('hub'));
-  }
-
   function apply(id) {
     document.documentElement.setAttribute('data-theme', id);
-    if (id === 'dopamine' && isHub()) {
-      if (!document.getElementById('fx-layer')) injectFx();
-    } else {
-      removeFx();
-    }
+    // 清理历史版本注入过的漂浮装饰层，避免老页面缓存残留
+    var stale = document.getElementById('fx-layer');
+    if (stale) stale.parentNode.removeChild(stale);
     // 通知页面（首页设置面板借此高亮当前主题）
     try {
       document.dispatchEvent(new CustomEvent('themechange', { detail: { theme: id } }));
