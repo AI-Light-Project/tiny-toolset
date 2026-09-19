@@ -507,3 +507,44 @@
     box-shadow: 4px 4px 0 var(--a3);
   }
 }
+
+/* ============================================================
+   大语言模型斩杀线（tools/llm-kill-line）
+   限定 .kill 作用域，避免污染其它工具页
+   ============================================================ */
+[data-theme="dopamine"] .kill .panel {
+  border-width: 3px; border-color: var(--a5);
+  box-shadow: 6px 6px 0 var(--a1);
+}
+[data-theme="dopamine"] .kill .panel-head {
+  border-bottom-width: 3px; border-bottom-color: var(--a5);
+}
+[data-theme="dopamine"] .kill .panel-head h2 { font-family: var(--font-head); font-weight: 900; letter-spacing: -.2px; }
+[data-theme="dopamine"] .kill .logo { background: linear-gradient(135deg, var(--a1), var(--a5)); }
+[data-theme="dopamine"] .kill .src-badge,
+[data-theme="dopamine"] .kill .badge { border-width: 2px; border-color: var(--a2); color: var(--text); }
+[data-theme="dopamine"] .kill .btn { border-width: 2px; border-radius: 999px; font-weight: 700; }
+[data-theme="dopamine"] .kill .btn:hover { background: var(--a3); color: #0d0d1a; border-color: var(--a3); }
+[data-theme="dopamine"] .kill .input { border-width: 2px; }
+[data-theme="dopamine"] .kill .input:focus { box-shadow: 0 0 0 3px rgba(255, 58, 242, .3); }
+[data-theme="dopamine"] .kill .chart-legend { border-bottom-width: 3px; border-bottom-color: var(--a5); }
+[data-theme="dopamine"] .kill .axis-note { border-bottom-width: 3px; border-bottom-color: var(--a5); }
+[data-theme="dopamine"] .kill .creator-item[aria-pressed="true"] .tick { box-shadow: 0 0 8px var(--c); }
+[data-theme="dopamine"] .kill .chart-tooltip {
+  border-width: 3px; border-color: var(--a2);
+  box-shadow: 6px 6px 0 var(--a5);
+}
+[data-theme="dopamine"] .kill .kill-item { border-width: 2px; }
+[data-theme="dopamine"] .kill .kill-item:hover { border-color: var(--win); box-shadow: 3px 3px 0 var(--win); }
+[data-theme="dopamine"] .kill .kill-target { border-width: 2px; border-color: var(--a4); }
+[data-theme="dopamine"] .kill .kill-summary .ks { border-width: 2px; }
+[data-theme="dopamine"] .kill .toast { background: var(--a3); color: #0d0d1a; font-weight: 800; box-shadow: 4px 4px 0 var(--a1); }
+
+/* 深底下网格线与刻度需要更高的对比度 */
+[data-theme="dopamine"] .kill #chart .grid-line { stroke: rgba(255, 255, 255, .16); }
+[data-theme="dopamine"] .kill #chart .grid-line.major { stroke: rgba(255, 255, 255, .26); }
+[data-theme="dopamine"] .kill #chart .axis-line { stroke: rgba(255, 255, 255, .45); }
+[data-theme="dopamine"] .kill #chart .tick-label { fill: rgba(255, 255, 255, .74); }
+[data-theme="dopamine"] .kill #chart .axis-title { fill: var(--a2); }
+[data-theme="dopamine"] .kill #chart .pt-label { stroke: #241540; }
+[data-theme="dopamine"] .kill .chart-hint { color: var(--text-sub); }

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>大语言模型斩杀线 · 成本 × 性能散点图</title>
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<script>document.documentElement.setAttribute('data-theme', (function(){try{return localStorage.getItem('tools-hub-theme')}catch(e){return null}})()||'clean')</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@700;800;900&family=Bangers&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="../../assets/css/theme.css">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="../../assets/css/theme-maximal.css">
+</head>
+<body class="kill">
+
+<header class="topbar">
+  <div class="brand">
+    <a class="back-home" href="../../index.html" title="返回工具集">←</a>
+    <div class="logo">斩杀</div>
+    <div>
+      <h1>大语言模型斩杀线</h1>
+      <p>成本 × 性能散点图 · 找出「更便宜且更强」的替代模型</p>
+    </div>
+  </div>
+  <div class="topbar-actions">
+    <span id="srcBadge" class="src-badge" title="数据来源">
+      <i class="dot"></i><span id="srcText">准备中…</span>
+    </span>
+    <button id="btnRefresh" class="btn btn-ghost">刷新数据</button>
+  </div>
+</header>
+
+<!-- 图表参数 -->
+<div class="toolbar" role="group" aria-label="图表参数">
+  <div class="tb-field">
+    <label for="xMetric">X 轴 · 成本</label>
+    <select id="xMetric" class="input"></select>
+  </div>
+  <div class="tb-field">
+    <label for="yMetric">Y 轴 · 表现</label>
+    <select id="yMetric" class="input"></select>
+  </div>
+  <label class="check" title="价格跨度极大，建议开启"><input type="checkbox" id="logX" checked><span>X 轴对数刻度</span></label>
+  <label class="check" title="分数分布通常较集中，按需开启"><input type="checkbox" id="logY"><span>Y 轴对数刻度</span></label>
+  <label class="check" title="把同一模型不同推理强度的变体连成线"><input type="checkbox" id="showLine" checked><span>同家族连线</span></label>
+  <button id="btnResetView" class="btn btn-mini">重置视图</button>
+</div>
+
+<!-- 当前轴说明 -->
+<p class="axis-note" id="axisNote"></p>
+
+<main class="layout">
+
+  <!-- 左：筛选 -->
+  <aside class="panel panel-filter">
+    <div class="panel-head">
+      <h2>模型筛选</h2>
+      <button class="btn btn-mini btn-ghost filter-toggle" id="btnFilterToggle" aria-expanded="true">收起</button>
+    </div>
+    <div class="panel-body" id="filterBody">
+      <div class="search-wrap">
+        <input type="search" id="searchModel" class="input" placeholder="搜索模型名 / 厂商…" autocomplete="off">
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-mini" id="btnSelAll">全选</button>
+        <button class="btn btn-mini btn-ghost" id="btnSelNone">清空</button>
+        <button class="btn btn-mini btn-ghost" id="btnSelMain">仅主流</button>
+      </div>
+      <p class="hint" id="filterHint"></p>
+      <div id="creatorList" class="creator-list"></div>
+    </div>
+  </aside>
+
+  <!-- 中：图表 -->
+  <section class="panel panel-chart">
+    <div class="panel-head">
+      <h2 id="chartTitle">成本 × 性能分布</h2>
+      <span class="badge" id="pointCount">0 个模型</span>
+    </div>
+    <div class="chart-legend" id="chartLegend" aria-label="图例：颜色对应模型厂商"></div>
+    <div class="chart-wrap" id="chartWrap">
+      <svg id="chart" role="img" aria-label="模型成本与表现散点图"></svg>
+      <div id="tooltip" class="chart-tooltip" hidden></div>
+      <div id="chartStatus" class="chart-status" hidden>
+        <div class="spinner" aria-hidden="true"></div>
+        <p id="chartStatusText">正在加载…</p>
+      </div>
+      <div id="chartEmpty" class="chart-status" hidden>
+        <p class="empty-ico" aria-hidden="true">🗺️</p>
+        <p id="chartEmptyText">没有符合筛选条件的模型</p>
+      </div>
+    </div>
+    <p class="hint chart-hint">
+      滚轮缩放 · 拖拽平移 · 悬停看明细 · <b>点击任一模型</b>画斩杀线（Esc 取消）
+    </p>
+  </section>
+
+  <!-- 右：斩杀分析 -->
+  <aside class="panel panel-kill">
+    <div class="panel-head">
+      <h2>斩杀分析</h2>
+      <button class="btn btn-mini btn-ghost" id="btnClearSel" hidden>取消选中</button>
+    </div>
+    <div class="panel-body" id="killBody"></div>
+  </aside>
+
+</main>
+
+<footer class="foot">
+  <p>
+    数据来源：<a href="https://artificialanalysis.ai/zh/leaderboards/models" target="_blank" rel="noopener">Artificial Analysis</a>
+    · 本页为纯前端离线工具，图片与数据均不上传
+    · <span id="footStamp">—</span>
+  </p>
+</footer>
+
+<div id="toast" class="toast"></div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script src="../../assets/js/theme.js"></script>
+</body>
+</html>
