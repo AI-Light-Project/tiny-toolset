@@ -8,7 +8,7 @@
     {
       "source": "/(.*)\\.(js|css|html|png|jpg|jpeg|webp|svg|woff2?|json|ico)$",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=86400, must-revalidate" }
+        { "key": "Cache-Control", "value": "public, max-age=300, must-revalidate" }
       ]
     }
   ]
