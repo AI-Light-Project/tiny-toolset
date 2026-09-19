@@ -1,10 +1,10 @@
 /* ============================================================
    theme.js —— 主题切换器 + 主题 API
    职责：读取/持久化主题（localStorage）→ 设置 <html data-theme>
-        → 暴露 window.THEME 供页面（如首页设置面板）调用
-        → 注入主题切换按钮：仅当页面既没有设置面板、也没有 .topbar 时才注入
-          （首页用设置面板；工具页有顶栏，主题在首页设置好后跟随即可）
+        → 暴露 window.THEME 供页面调用（全站唯一的主题入口是首页「齿轮 → 页面设置」）
         → 多巴胺主题下注入漂浮装饰层
+   说明：本脚本**不再注入任何悬浮切换按钮**。工具页只负责跟随首页选好的主题，
+        避免固定定位的按钮压住工具页顶栏右侧的操作区。
    约定：普通 <script> 引入（非 ESM，file:// 兼容）；
         页面 <head> 里先放一段内联脚本设置初始 data-theme 防闪烁。
    ============================================================ */
@@ -87,9 +87,6 @@
     } else {
       removeFx();
     }
-    // 工具页的悬浮按钮（若存在）同步标签
-    var label = document.querySelector('.theme-toggle .tt-label');
-    if (label) label.textContent = labelFor(id);
     // 通知页面（首页设置面板借此高亮当前主题）
     try {
       document.dispatchEvent(new CustomEvent('themechange', { detail: { theme: id } }));
@@ -100,30 +97,6 @@
     if (!isValid(id)) return;
     save(id);
     apply(id);
-  }
-
-  function injectToggle() {
-    // 首页自带设置面板 → 不注入悬浮按钮（主题切换收进设置里）
-    if (document.getElementById('settings-panel')) return;
-    // 工具页统一不注入：顶栏（.topbar）本身就是页面头部，悬浮按钮会压在它右侧的按钮上；
-    // 主题在首页设置面板里选好即可，工具页通过 localStorage 跟随。
-    if (document.querySelector('.topbar')) return;
-    if (document.querySelector('.theme-toggle')) return;
-    var b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'theme-toggle';
-    b.setAttribute('aria-label', '切换界面主题，当前：' + labelFor(current()));
-    b.innerHTML = '<span class="tt-dot" aria-hidden="true"></span><span class="tt-label"></span>';
-    b.addEventListener('click', function () {
-      var idx = 0;
-      for (var i = 0; i < THEMES.length; i++) {
-        if (THEMES[i].id === current()) idx = i;
-      }
-      var next = THEMES[(idx + 1) % THEMES.length].id;
-      set(next);
-      b.setAttribute('aria-label', '切换界面主题，当前：' + labelFor(next));
-    });
-    document.body.appendChild(b);
   }
 
   /* 对外 API：首页设置面板调用 */
@@ -137,5 +110,4 @@
   };
 
   apply(current());
-  injectToggle();
 })();

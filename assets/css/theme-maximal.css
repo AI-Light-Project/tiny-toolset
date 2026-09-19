@@ -234,38 +234,6 @@
 [data-theme="dopamine"] .btn-primary:hover { color: #fff; border-color: var(--a3); }
 [data-theme="dopamine"] .btn:active { transform: scale(.96); }
 
-/* ---------- 主题切换按钮（theme.js 注入）
-   仅在「既无设置面板、也无 .topbar」的页面出现（首页用设置面板，工具页跟随首页设置） ---------- */
-.theme-toggle {
-  position: fixed;
-  top: 14px; right: 14px;
-  z-index: 70;
-  display: flex; align-items: center; gap: 7px;
-  border: 3px solid var(--a2);
-  border-radius: 999px;
-  background: rgba(13, 13, 26, .82);
-  color: var(--text);
-  padding: 7px 13px;
-  font-size: 12px;
-  font-weight: 800;
-  font-family: inherit;
-  cursor: pointer;
-  box-shadow: 3px 3px 0 var(--a3);
-}
-[data-theme="clean"] .theme-toggle {
-  border-width: 1px;
-  border-color: var(--line-strong);
-  background: #fff;
-  box-shadow: var(--shadow);
-}
-.theme-toggle:hover { transform: translateY(-2px) rotate(-2deg); border-color: var(--a3); }
-.theme-toggle .tt-dot {
-  width: 10px; height: 10px; border-radius: 50%;
-  background: var(--a1);
-  box-shadow: 0 0 8px var(--a1);
-}
-[data-theme="clean"] .theme-toggle .tt-dot { background: var(--primary); box-shadow: none; }
-
 /* ---------- 漂浮装饰层（theme.js 注入） ---------- */
 .fx-layer { position: fixed; inset: 0; z-index: 60; pointer-events: none; }
 .fx-layer img {
@@ -327,12 +295,6 @@
   [data-theme="dopamine"] .export-bar {
     border-top: 3px solid var(--a1);
     background: rgba(13, 13, 26, .94);
-  }
-
-  /* 悬浮主题按钮避开状态栏与安全区 */
-  .theme-toggle {
-    top: calc(8px + env(safe-area-inset-top, 0px));
-    right: calc(8px + env(safe-area-inset-right, 0px));
   }
 
   .fx-layer img:nth-child(n+5) { display: none; }
