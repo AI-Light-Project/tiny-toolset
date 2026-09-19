@@ -2,9 +2,10 @@
    theme.js —— 主题切换器 + 主题 API
    职责：读取/持久化主题（localStorage）→ 设置 <html data-theme>
         → 暴露 window.THEME 供页面调用（全站唯一的主题入口是首页「齿轮 → 页面设置」）
-        → 多巴胺主题下注入漂浮装饰层
+        → 多巴胺主题下给**首页**注入漂浮装饰层（工具页不注入）
    说明：本脚本**不再注入任何悬浮切换按钮**。工具页只负责跟随首页选好的主题，
-        避免固定定位的按钮压住工具页顶栏右侧的操作区。
+        避免固定定位的按钮压住工具页顶栏右侧的操作区；
+        漂浮插画同样只在首页出现，否则会压住工具页卡片里的内容。
    约定：普通 <script> 引入（非 ESM，file:// 兼容）；
         页面 <head> 里先放一段内联脚本设置初始 data-theme 防闪烁。
    ============================================================ */
@@ -80,9 +81,15 @@
     if (fx) fx.remove();
   }
 
+  // 漂浮插画只给首页（<body class="hub">）用：工具页是功能页，装饰图会压住卡片里的内容，
+  // 而且左下角那张彩虹很容易被误认成「切换主题」的按钮。
+  function isHub() {
+    return !!(document.body && document.body.classList.contains('hub'));
+  }
+
   function apply(id) {
     document.documentElement.setAttribute('data-theme', id);
-    if (id === 'dopamine') {
+    if (id === 'dopamine' && isHub()) {
       if (!document.getElementById('fx-layer')) injectFx();
     } else {
       removeFx();
