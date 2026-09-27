@@ -15,17 +15,32 @@
   var SRC_URL = 'https://artificialanalysis.ai/zh/leaderboards/models';
   var PREF_KEY = 'kill_prefs';
 
-  // X 轴：成本口径。每一项都必须在界面上说清"是哪种价"
+  // X 轴可选指标。kind 决定数值怎么格式化，以及「斩杀区」用什么措辞：
+  //   money  → 更便宜 / 更贵
+  //   params → 参数更少 / 参数更多
+  //   tokens → 上下文更短 / 上下文更长
   var X_METRICS = [
-    { id: 'blend',  label: '混合价（输入 : 输出 = 3 : 1）', short: '混合价', unit: 'USD / 百万 tokens',
+    { id: 'blend',  kind: 'money', label: '混合价（输入 : 输出 = 3 : 1）', short: '混合价', unit: 'USD / 百万 tokens',
       note: '混合价 = (3 × 输入价 + 1 × 输出价) ÷ 4。按输入 token 占多数的一般对话负载折算，单位 USD / 百万 tokens。' },
-    { id: 'input',  label: '输入价（prompt）', short: '输入价', unit: 'USD / 百万 tokens',
+    { id: 'input',  kind: 'money', label: '输入价（prompt）', short: '输入价', unit: 'USD / 百万 tokens',
       note: '每百万输入 token 的价格（prompt 计费），单位 USD / 百万 tokens。' },
-    { id: 'output', label: '输出价（completion）', short: '输出价', unit: 'USD / 百万 tokens',
+    { id: 'output', kind: 'money', label: '输出价（completion）', short: '输出价', unit: 'USD / 百万 tokens',
       note: '每百万输出 token 的价格（completion 计费），单位 USD / 百万 tokens。' },
-    { id: 'cost',   label: '每任务成本（AA 实测口径）', short: '每任务成本', unit: 'USD / 任务',
-      note: 'Artificial Analysis 用固定评测任务实测的综合成本，已计入思考 token 与缓存折扣，单位 USD / 任务。' }
+    { id: 'cost',   kind: 'money', label: '每任务成本（AA 实测口径）', short: '每任务成本', unit: 'USD / 任务',
+      note: 'Artificial Analysis 用固定评测任务实测的综合成本，已计入思考 token 与缓存折扣，单位 USD / 任务。' },
+    { id: 'params', kind: 'params', label: '参数量（总参数）', short: '参数量', unit: '十亿参数 B',
+      note: '模型总参数量，单位十亿（B）。AA 本身不提供具体参数量（多数闭源厂商不公开），该数值从模型名解析，' +
+        'MoE 模型取总参数而非激活参数，所以只有名称里公开了参数的模型才有值。' },
+    { id: 'ctx',    kind: 'tokens', label: '上下文窗口', short: '上下文', unit: 'tokens',
+      note: '模型支持的最大上下文长度（tokens），即一次能"记住"多少内容。' }
   ];
+
+  // 不同量纲下 X 轴的措辞（X 越小越"优"，所以斩杀区永远在左侧）
+  var KIND_META = {
+    money:  { low: '更便宜', high: '更贵', lowWord: '便宜', highWord: '贵' },
+    params: { low: '参数更少', high: '参数更多', lowWord: '少', highWord: '多' },
+    tokens: { low: '上下文更短', high: '上下文更长', lowWord: '短', highWord: '长' }
+  };
 
   // Y 轴：评测基准
   var Y_METRICS = [
@@ -129,16 +144,40 @@
   // ============ 轴取值 ============
   function xMeta() { return X_METRICS.filter(function (m) { return m.id === state.xMetric; })[0] || X_METRICS[0]; }
   function yMeta() { return Y_METRICS.filter(function (m) { return m.id === state.yMetric; })[0] || Y_METRICS[0]; }
+  function kindMeta() { return KIND_META[xMeta().kind] || KIND_META.money; }
 
   function xVal(m) {
-    if (state.xMetric === 'blend') {
+    var k = state.xMetric;
+    if (k === 'blend') {
       if (m.in == null || m.out == null) return null;
       var v = (3 * m.in + m.out) / 4;
       return v > 0 ? v : null;
     }
-    if (state.xMetric === 'input') return m.in != null && m.in > 0 ? m.in : null;
-    if (state.xMetric === 'output') return m.out != null && m.out > 0 ? m.out : null;
+    if (k === 'input') return m.in != null && m.in > 0 ? m.in : null;
+    if (k === 'output') return m.out != null && m.out > 0 ? m.out : null;
+    if (k === 'params') return m.par != null && m.par > 0 ? m.par : null;
+    if (k === 'ctx') return m.ctx != null && m.ctx > 0 ? m.ctx : null;
     return m.cost != null && m.cost > 0 ? m.cost : null;
+  }
+
+  // 按当前 X 轴量纲格式化数值
+  function fmtParams(v) {
+    if (v >= 1000) return (Math.round(v / 100) / 10) + 'T';   // 2400 → 2.4T
+    if (v >= 10) return Math.round(v) + 'B';
+    if (v >= 1) return (Math.round(v * 10) / 10) + 'B';
+    return (Math.round(v * 100) / 100) + 'B';
+  }
+  function fmtTokens(v) {
+    if (v >= 1e6) return (Math.round(v / 1e5) / 10) + 'M';
+    if (v >= 1e3) return Math.round(v / 1e3) + 'K';
+    return String(v);
+  }
+  function fmtXVal(v) {
+    if (v == null) return '—';
+    var k = xMeta().kind;
+    if (k === 'params') return fmtParams(v);
+    if (k === 'tokens') return fmtTokens(v);
+    return fmtMoney(v);
   }
   function yVal(m) {
     if (state.yMetric === 'idx') return num(m.idx);
@@ -203,6 +242,26 @@
     'LG AI Research': '#a50034', Upstage: '#7c3aed', 'Nous Research': '#c2410c',
     'Allen Institute for AI': '#1f6f8b', 'AI21 Labs': '#e4002b', ServiceNow: '#62d84e'
   };
+  /* AA 不公布具体参数量（闭源模型无从得知），只能从模型名里解析：
+       "Qwen3.8 2.4T A95B"    → 2400（MoE 取总参数，跳过 A95B 激活参数）
+       "K2 Horizon 375B A23B" → 375
+       "Gemma 3 270M"         → 0.27
+     返回单位为「十亿参数(B)」，解析不出返回 null。与 build-snapshot.js 里的同名函数保持一致。 */
+  function parseParams(name) {
+    if (!name) return null;
+    var re = /(\d+(?:\.\d+)?)\s*([BTM])(?![A-Za-z0-9])/g;
+    var m;
+    while ((m = re.exec(name))) {
+      var prev = name.charAt(m.index - 1);
+      if (prev === 'A' || prev === 'a') continue;      // A23B = 激活参数
+      var unit = m[2];
+      var v = parseFloat(m[1]) * (unit === 'T' ? 1000 : unit === 'M' ? 0.001 : 1);
+      if (!isFinite(v) || v <= 0) continue;
+      return Math.round(v * 1000) / 1000;
+    }
+    return null;
+  }
+
   function colorFor(name) {
     if (KNOWN_COLORS[name]) return KNOWN_COLORS[name];
     var h = 0;
@@ -235,6 +294,7 @@
         c: m.modelCreatorName || 'Other',
         o: m.isOpenWeights ? 1 : 0,
         ctx: num(m.contextWindowTokens) || 0,
+        par: parseParams(nm),                    // 参数量（十亿），AA 不提供，从模型名解析
         idx: r1(idx),
         cost: cost === null ? null : Math.round(cost * 10000) / 10000,
         in: num(m.price1mInputTokens),
@@ -453,9 +513,12 @@
     return out;
   }
   function tickLabelX(v) {
-    if (v >= 1) return '$' + (Math.round(v * 100) / 100);
-    if (v >= 0.1) return '$' + (Math.round(v * 1000) / 1000);
-    return '$' + v.toPrecision(2).replace(/e-?\d+/, '');
+    if (xMeta().kind === 'money') {
+      if (v >= 1) return '$' + (Math.round(v * 100) / 100);
+      if (v >= 0.1) return '$' + (Math.round(v * 1000) / 1000);
+      return '$' + v.toPrecision(2).replace(/e-?\d+/, '');
+    }
+    return fmtXVal(v);
   }
   function tickLabelY(v, unit) {
     var span = state.view ? state.view.y1 - state.view.y0 : 1;
@@ -620,12 +683,13 @@
       parts.push('<line class="cross-line win" x1="' + px(selX).toFixed(1) + '" y1="' + b.t + '" x2="' + px(selX).toFixed(1) + '" y2="' + (b.t + b.h) + '"/>');
     }
 
-    // --- 象限标签 ---
+    // --- 象限标签（措辞随 X 轴量纲变化：成本→更便宜，参数量→参数更少…） ---
     if (selX != null) {
-      parts.push('<text class="quad-label win" x="' + (b.l + 10) + '" y="' + (b.t + 15) + '">↑ 更便宜 · 更强（斩杀区）</text>');
-      parts.push('<text class="quad-label lose" x="' + (b.l + b.w - 10) + '" y="' + (b.t + b.h - 9) + '" text-anchor="end">更贵 · 更弱 ↓</text>');
-      parts.push('<text class="quad-label" fill="var(--text-muted)" x="' + (b.l + b.w - 10) + '" y="' + (b.t + 15) + '" text-anchor="end">更贵 · 更强</text>');
-      parts.push('<text class="quad-label" fill="var(--text-muted)" x="' + (b.l + 10) + '" y="' + (b.t + b.h - 9) + '">更便宜 · 更弱</text>');
+      var km = kindMeta();
+      parts.push('<text class="quad-label win" x="' + (b.l + 10) + '" y="' + (b.t + 15) + '">↑ ' + km.low + ' · 更强（斩杀区）</text>');
+      parts.push('<text class="quad-label lose" x="' + (b.l + b.w - 10) + '" y="' + (b.t + b.h - 9) + '" text-anchor="end">' + km.high + ' · 更弱 ↓</text>');
+      parts.push('<text class="quad-label" fill="var(--text-muted)" x="' + (b.l + b.w - 10) + '" y="' + (b.t + 15) + '" text-anchor="end">' + km.high + ' · 更强</text>');
+      parts.push('<text class="quad-label" fill="var(--text-muted)" x="' + (b.l + 10) + '" y="' + (b.t + b.h - 9) + '">' + km.low + ' · 更弱</text>');
     }
 
     // 前沿点偶尔会挤在一起（低价区尤其密），做一次只跟"前一个"比的轻量避让：
@@ -766,7 +830,7 @@
       ? '实时抓取自 Artificial Analysis（' + fmtDateTime(state.data.fetchedAt) + '）'
       : '内置快照 · 数据日期 ' + (state.data.generated || '未知') + ' · 来源 Artificial Analysis';
     var sub = sel
-      ? '斩杀对象：' + sel.n + '（' + fmtMoney(selX) + ' · ' + fmtScore(selY, ym.unit) + '）' +
+      ? '斩杀对象：' + sel.n + '（' + fmtXVal(selX) + ' · ' + fmtScore(selY, ym.unit) + '）' +
         ' · 能斩杀它的模型 ' + killers.length + ' 个 · 图上共 ' + visible.length + ' 个模型'
       : 'X 轴 ' + xm.short + '（' + xm.unit + '，' + (state.logX ? '对数' : '线性') + '）' +
         ' · Y 轴 ' + ym.label + '（' + ym.unit + '）' +
@@ -967,7 +1031,7 @@
         '<div class="kill-empty"><span class="ke-ico">🎯</span>' +
         '点击图中任意一个模型，把它设为「斩杀对象」。<ol>' +
         '<li>以该模型为原点画出十字参考线，把图分成四个象限；</li>' +
-        '<li>高亮 <b>成本更低、表现更好</b> 的象限；</li>' +
+        '<li>高亮 <b>X 轴更优、表现更好</b> 的象限；</li>' +
         '<li>列出该象限内的所有模型 —— 它们都能「斩杀」当前选中的模型。</li>' +
         '</ol></div>';
       return;
@@ -995,27 +1059,28 @@
       '<div class="kt-name"><i></i>' + esc(sel.n) + '</div>' +
       '<dl>' +
       '<dt>厂商</dt><dd>' + esc(sel.c) + (sel.o ? ' · 开源权重' : '') + '</dd>' +
-      '<dt>' + esc(xm.short) + '</dt><dd>' + esc(fmtMoney(selX)) + '</dd>' +
+      '<dt>' + esc(xm.short) + '</dt><dd>' + esc(fmtXVal(selX)) + '</dd>' +
       '<dt>' + esc(ym.short) + '</dt><dd>' + esc(fmtScore(selY, ym.unit)) + '</dd>' +
       '</dl></div>';
 
     html += '<div class="kill-summary"><div class="ks win"><b>' + killers.length + '</b><span>可斩杀它的模型</span></div>' +
       '<div class="ks"><b>' + victims.length + '</b><span>被它反杀</span></div></div>';
 
+    var km = kindMeta();
     if (!killers.length) {
-      html += '<div class="kill-empty">在当前筛选范围与坐标口径下，没有 <b>同时更便宜且更强</b> 的模型 —— ' +
-        '它位于性价比前沿，暂时无人能斩。</div>';
+      html += '<div class="kill-empty">在当前筛选范围与坐标口径下，没有 <b>' + km.low + ' 且更强</b> 的模型 —— ' +
+        '它位于前沿，暂时无人能斩。</div>';
     } else {
       html += '<ul class="kill-list">';
       killers.forEach(function (m) {
         var mx = xVal(m), my = yVal(m);
         var dScore = my - selY;
-        var dPrice = (mx - selX) / selX * 100;
+        var dX = (mx - selX) / selX * 100;
         html += '<li class="kill-item" data-id="' + esc(m.id) + '" style="--c:' + esc(colorOf(m.c)) + '">' +
           '<div class="ki-top"><i></i><span class="ki-name">' + esc(m.n) + '</span>' +
           '<span class="ki-delta">+' + (Math.round(dScore * 10) / 10) + (ym.unit === '%' ? '%' : '') + '</span></div>' +
           '<div class="ki-meta">' +
-          '<span>' + esc(fmtMoney(mx)) + '（<span class="up">便宜 ' + Math.abs(Math.round(dPrice)) + '%</span>）</span>' +
+          '<span>' + esc(fmtXVal(mx)) + '（<span class="up">' + km.lowWord + ' ' + Math.abs(Math.round(dX)) + '%</span>）</span>' +
           '<span>' + esc(ym.short) + ' ' + esc(fmtScore(my, ym.unit)) + '</span>' +
           '</div></li>';
       });
@@ -1170,13 +1235,15 @@
     var xm = xMeta(), ym = yMeta();
     var mv = xVal(m), sv = yVal(m);
     var rows = '';
-    rows += '<dt>' + esc(xm.short) + '</dt><dd>' + esc(fmtMoney(mv)) + '</dd>';
+    rows += '<dt>' + esc(xm.short) + '</dt><dd>' + esc(fmtXVal(mv)) + '</dd>';
+    if (m.par != null) rows += '<dt>参数量</dt><dd>' + esc(fmtParams(m.par)) + '</dd>';
     rows += '<dt>' + esc(ym.short) + '</dt><dd>' + esc(fmtScore(sv, ym.unit)) + '</dd>';
     rows += '<dt>输入 / 输出价</dt><dd>' + esc(fmtMoney(m.in)) + ' / ' + esc(fmtMoney(m.out)) + '</dd>';
     if (m.cost != null) rows += '<dt>每任务成本</dt><dd>' + esc(fmtMoney(m.cost)) + '</dd>';
     if (m.tps != null) rows += '<dt>输出速度</dt><dd>' + Math.round(m.tps) + ' tok/s</dd>';
-    if (m.ctx) rows += '<dt>上下文</dt><dd>' + (m.ctx >= 1000 ? Math.round(m.ctx / 1000) + 'K' : m.ctx) + '</dd>';
+    if (m.ctx) rows += '<dt>上下文</dt><dd>' + esc(fmtTokens(m.ctx)) + '</dd>';
 
+    var km = kindMeta();
     var tip = '';
     var sel = state.selected ? byId[state.selected] : null;
     if (sel && sel.id !== m.id) {
@@ -1184,8 +1251,8 @@
       if (sx != null && sy != null && mv != null && sv != null) {
         var dp = (mv - sx) / sx * 100;
         var ds = sv - sy;
-        if (dp < 0 && ds > 0) tip = '可斩杀当前选中模型（便宜 ' + Math.abs(Math.round(dp)) + '%，高 ' + (Math.round(ds * 10) / 10) + '）';
-        else if (dp > 0 && ds < 0) tip = '被当前选中模型斩杀（贵 ' + Math.round(dp) + '%，低 ' + Math.abs(Math.round(ds * 10) / 10) + '）';
+        if (dp < 0 && ds > 0) tip = '可斩杀当前选中模型（' + km.lowWord + ' ' + Math.abs(Math.round(dp)) + '%，高 ' + (Math.round(ds * 10) / 10) + '）';
+        else if (dp > 0 && ds < 0) tip = '被当前选中模型斩杀（' + km.highWord + ' ' + Math.round(dp) + '%，低 ' + Math.abs(Math.round(ds * 10) / 10) + '）';
       }
     } else if (!sel) {
       tip = '点击设为斩杀对象';
@@ -1234,19 +1301,23 @@
   }
 
   function updateAxisNote() {
-    var xm = xMeta(), ym = yMeta();
+    var xm = xMeta(), ym = yMeta(), km = kindMeta();
     el.axisNote.innerHTML =
-      '<b>X 轴</b>（成本）：' + esc(xm.note) +
+      '<b>X 轴</b>（' + esc(xm.short) + '）：' + esc(xm.note) +
       ' &nbsp;·&nbsp; <b>Y 轴</b>（表现）：' + esc(ym.label) + ' —— ' + esc(ym.note) +
-      ' <span class="win">斩杀区</span> = 成本更低 <b>且</b> 表现更好，' +
-      '<span class="lose">右下区</span> = 成本更高且表现更差。';
+      ' <span class="win">斩杀区</span> = ' + esc(km.low) + ' <b>且</b> 更强，' +
+      '<span class="lose">右下区</span> = ' + esc(km.high) + ' 且更弱。';
   }
 
   // ============ 事件绑定 ============
   function bind() {
     el.xMetric.addEventListener('change', function () {
       state.xMetric = el.xMetric.value;
-      if (state.xMetric !== 'cost') state.logX = el.logX.checked;
+      // 参数量与上下文都横跨 3 个数量级以上，切过去时默认打开对数轴（仍可手动关掉）
+      if (xMeta().kind !== 'money' && !state.logX) {
+        state.logX = true;
+        el.logX.checked = true;
+      }
       fitView(); updateAxisNote(); render(); savePrefs();
     });
     el.yMetric.addEventListener('change', function () {
@@ -1373,6 +1444,8 @@
     normalize: normalize,
     visibleModels: visibleModels,
     xVal: xVal, yVal: yVal,
+    fmtXVal: fmtXVal, fmtParams: fmtParams, fmtTokens: fmtTokens,
+    parseParams: parseParams, kindMeta: kindMeta,
     render: render, fitView: fitView, selectModel: selectModel,
     paretoFrontier: paretoFrontier,
     exportChart: exportChart,

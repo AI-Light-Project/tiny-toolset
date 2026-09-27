@@ -50,6 +50,27 @@ const BENCH_SRC = {
 const num = (v) => { const n = Number(v); return isFinite(n) ? n : null; };
 const r1 = (v) => (v == null ? 0 : Math.round(v * 10) / 10);
 
+/* AA 不公布具体参数量（闭源模型无从得知，只给了 tiny/small/medium/large 这样的档位），
+   所以参数量只能从模型名里解析：
+     "Qwen3.8 2.4T A95B"      → 2400（MoE：取总参数 2.4T，跳过 A95B 激活参数）
+     "K2 Horizon 375B A23B"   → 375
+     "Gemma 3 270M"           → 0.27
+   返回单位：十亿参数（B）。解析不出则返回 null。 */
+function parseParams(name) {
+  if (!name) return null;
+  const re = /(\d+(?:\.\d+)?)\s*([BTM])(?![A-Za-z0-9])/g;
+  let m;
+  while ((m = re.exec(name))) {
+    const prev = name.charAt(m.index - 1);
+    if (prev === 'A' || prev === 'a') continue;          // A23B 是激活参数，不是总参数
+    const unit = m[2];
+    const v = parseFloat(m[1]) * (unit === 'T' ? 1000 : unit === 'M' ? 0.001 : 1);
+    if (!isFinite(v) || v <= 0) continue;
+    return Math.round(v * 1000) / 1000;
+  }
+  return null;
+}
+
 /* ---- 1. 抓取 ---- */
 async function fetchHtml() {
   const res = await fetch(SOURCE_URL, {
@@ -125,6 +146,7 @@ function build(raw) {
       c: m.modelCreatorName || 'Other',
       o: m.isOpenWeights ? 1 : 0,
       ctx: num(m.contextWindowTokens) || 0,
+      par: parseParams(nm),                              // 参数量（十亿），仅名称中公开参数的模型有值
       idx: r1(num(m.intelligenceIndex)),
       cost: cost === null ? null : Math.round(cost * 10000) / 10000,
       in: num(m.price1mInputTokens),
@@ -177,5 +199,7 @@ function build(raw) {
   console.log('模型', snap.models.length, '| 厂商', snap.creators.length,
     '| 有价格', snap.models.filter((m) => m.in > 0 && m.out > 0).length,
     '| 有每任务成本', snap.models.filter((m) => m.cost > 0).length,
+    '| 有参数量', snap.models.filter((m) => m.par != null).length,
+    '| 有上下文', snap.models.filter((m) => m.ctx > 0).length,
     '| 文件', (js.length / 1024).toFixed(1) + ' KB');
 })().catch((e) => { console.error('失败：' + e.message); process.exit(1); });
